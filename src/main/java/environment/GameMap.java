@@ -1,19 +1,19 @@
 package environment;
 
+import enums.Corner;
 import enums.Direction;
 import utils.RandomGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-public class Map {
+public class GameMap {
 
     private int _height = 0;
     private int _width = 0;
     private final List<List<Tile>> tiles = new ArrayList<>();
-    private final List<SafeZone> safeZones = new ArrayList<>(4);
+    private final Map<Corner, SafeZone> _safeZones = new EnumMap<>(Corner.class);
 
-    public Map(int height, int width, RandomGenerator random, double density){
+    public GameMap(int height, int width, RandomGenerator random, double density){
         this._height = height;
         this._width = width;
 
@@ -42,14 +42,14 @@ public class Map {
             throw new IllegalStateException("SafeZones trop grandes pour cette carte");
         }
 
-        this.safeZones.add(new SafeZone(0,                 0,                  zoneWidth, zoneHeight)); // haut-gauche
-        this.safeZones.add(new SafeZone(this._width - zoneWidth,  0,                  zoneWidth, zoneHeight)); // haut-droite
-        this.safeZones.add(new SafeZone(0,                 this._height - zoneHeight,  zoneWidth, zoneHeight)); // bas-gauche
-        this.safeZones.add(new SafeZone(this._width - zoneWidth,  this._height - zoneHeight,  zoneWidth, zoneHeight));
+        _safeZones.put(Corner.TOP_LEFT,     new SafeZone(0,            0,             zoneWidth, zoneHeight));
+        _safeZones.put(Corner.TOP_RIGHT,    new SafeZone(_width - zoneWidth,  0,             zoneWidth, zoneHeight));
+        _safeZones.put(Corner.BOTTOM_LEFT,  new SafeZone(0,            _height - zoneHeight,  zoneWidth, zoneHeight));
+        _safeZones.put(Corner.BOTTOM_RIGHT, new SafeZone(_width - zoneWidth,  _height - zoneHeight,  zoneWidth, zoneHeight));
     }
 
     private int getMaximalSafeZoneSize() {
-        return (this._width * this._height - 1) / 8;
+        return (this._width * this._height - 1) / 12;
     }
 
     private int[] getSafeZoneDimensions() {
@@ -62,6 +62,10 @@ public class Map {
         height = Math.clamp(height, 1, this._height / 2);
 
         return new int[] { width, height };
+    }
+
+    public Collection<SafeZone> getSafeZones(){
+        return this._safeZones.values();
     }
 
     /**
@@ -95,8 +99,12 @@ public class Map {
         return this.getTilesAround(x,y).size();
     }
 
+    public SafeZone getSafeZone(Corner corner) {
+        return this._safeZones.get(corner);
+    }
+
     public SafeZone getSafeZoneAt(int x, int y) {
-        for (SafeZone z : this.safeZones) {
+        for (SafeZone z : this._safeZones.values()) {
             if (z.contains(x, y)) return z;
         }
         return null;
@@ -114,28 +122,46 @@ public class Map {
         }
     }
 
+    public void place(Occupant occupant, Tile tile){
+        tile.setOccupant(occupant);
+    }
+
     /**
-     * Method to debug till we get UI
-     * 2 = SafeZone, 1 = obstacle, 0 = case vide
+     * Method to debug till we get UI.
+     * Occupant -> its symbol (# obstacle, F/W/g/p masters...),
+     * SafeZone -> 'S', empty tile -> '.'
      */
     public void printDebug() {
         StringBuilder sb = new StringBuilder();
         for (int y = 0; y < this._height; y++) {
             for (int x = 0; x < this._width; x++) {
                 Tile tile = getTile(x, y);
-                int value;
-                if (tile.getOccupant() instanceof Obstacle) {
-                    value = 1;
+                Occupant occupant = tile.getOccupant();
+
+                String symbol;
+                if (occupant != null) {
+                    symbol = occupant.getSymbol();     // polymorphe : pas d'instanceof
                 } else if (getSafeZoneAt(x, y) != null) {
-                    value = 2;
+                    symbol = "S";
                 } else {
-                    value = 0;
+                    symbol = ".";
                 }
-                sb.append(value).append(' ');
+                sb.append(symbol).append(' ');
             }
             sb.append('\n');
         }
         System.out.print(sb);
+    }
+
+    public List<Tile> getFreeTilesIn(SafeZone zone) {
+        List<Tile> free = new ArrayList<>();
+        for (int y = zone.getY0(); y < zone.getY0() + zone.getHeight(); y++) {
+            for (int x = zone.getX0(); x < zone.getX0() + zone.getWidth(); x++) {
+                Tile t = getTile(x, y);
+                if (t.getOccupant() == null) free.add(t);
+            }
+        }
+        return free;
     }
 
 }
