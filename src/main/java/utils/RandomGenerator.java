@@ -31,4 +31,18 @@ public final class RandomGenerator {
         shuffle(copy);
         return new ArrayList<>(copy.subList(0, Math.min(k, copy.size())));
     }
+
+    public <T> T pickRandom(List<T> list) {
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("Cannot pick from an empty list");
+        }
+        return list.get(_random.nextInt(list.size()));
+    }
+
+    public int nextInt(int min, int max) {
+        if (min > max) {
+            throw new IllegalArgumentException("min > max");
+        }
+        return min + _random.nextInt(max - min + 1);
+    }
 }

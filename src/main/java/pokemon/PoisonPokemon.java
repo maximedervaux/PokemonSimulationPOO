@@ -6,14 +6,15 @@ import utils.RandomGenerator;
 
 public class PoisonPokemon extends BadPokemon {
     private static final int MAX_EP = 100;
+    private static int instanceCount = 0;
 
     public PoisonPokemon() {
-        super(MasterPoison.getInstance(), MAX_EP);   // impose le bon Master
+        super(MasterPoison.getInstance(), MAX_EP);
+        PoisonPokemon.instanceCount++;
     }
 
-    @Override
-    public void move(GameMap map, RandomGenerator random) {
-        // TODO
+    public static int getInstanceCount() {
+        return instanceCount;
     }
 
     @Override

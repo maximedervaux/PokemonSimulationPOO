@@ -6,4 +6,8 @@ public abstract class BadPokemon extends Pokemon{
     protected BadPokemon(Master master, int maxEp) {
         super(master, maxEp);
     }
+
+    public boolean isGood(){
+        return false;
+    }
 }

@@ -2,6 +2,7 @@ package environment;
 
 import enums.Corner;
 import enums.Direction;
+import pokemon.Pokemon;
 import utils.RandomGenerator;
 
 import java.util.*;
@@ -123,13 +124,64 @@ public class GameMap {
     }
 
     public void place(Occupant occupant, Tile tile){
+        // Liberate the old tile
+        if (occupant.getTile() != null) {
+            occupant.getTile().setOccupant(null);
+        }
+
+        // Update the new one
         tile.setOccupant(occupant);
+        occupant.setTile(tile);
+    }
+
+    public List<Tile> getFreeTilesIn(SafeZone zone) {
+        List<Tile> free = new ArrayList<>();
+        for (int y = zone.getY0(); y < zone.getY0() + zone.getHeight(); y++) {
+            for (int x = zone.getX0(); x < zone.getX0() + zone.getWidth(); x++) {
+                Tile tile = getTile(x, y);
+                if (tile.getOccupant() == null) free.add(tile);
+            }
+        }
+        return free;
+    }
+
+    /**
+     * Direction à suivre pour rejoindre la SafeZone du mobile (celle de son Master).
+
+     */
+    public Direction directionToSafeZone(Pokemon pokemon) {
+        Tile masterTile = pokemon.getMaster().getTile();
+        Tile current = pokemon.getTile();
+        if (masterTile == null || current == null) {
+            return null;
+        }
+
+        int dx = masterTile.getX() - current.getX();
+        int dy = masterTile.getY() - current.getY();
+
+        if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
+            return null;
+        }
+
+        return Direction.fromDelta(dx, dy);
+    }
+
+    /**
+     * Remplace un mobile épuisé par un obstacle sur sa case.
+     * Le mobile n'a plus de case : il sort de la carte.
+     */
+    public void convertToObstacle(Pokemon pokemon) {
+        Tile current = pokemon.getTile();
+        if (current == null) return;
+        current.setOccupant(new Obstacle());
+        pokemon.setTile(null);
     }
 
     /**
      * Method to debug till we get UI.
      * Occupant -> its symbol (# obstacle, F/W/g/p masters...),
      * SafeZone -> 'S', empty tile -> '.'
+     * Export it in the right class
      */
     public void printDebug() {
         StringBuilder sb = new StringBuilder();
@@ -140,7 +192,7 @@ public class GameMap {
 
                 String symbol;
                 if (occupant != null) {
-                    symbol = occupant.getSymbol();     // polymorphe : pas d'instanceof
+                    symbol = occupant.getSymbol();
                 } else if (getSafeZoneAt(x, y) != null) {
                     symbol = "S";
                 } else {
@@ -151,17 +203,6 @@ public class GameMap {
             sb.append('\n');
         }
         System.out.print(sb);
-    }
-
-    public List<Tile> getFreeTilesIn(SafeZone zone) {
-        List<Tile> free = new ArrayList<>();
-        for (int y = zone.getY0(); y < zone.getY0() + zone.getHeight(); y++) {
-            for (int x = zone.getX0(); x < zone.getX0() + zone.getWidth(); x++) {
-                Tile t = getTile(x, y);
-                if (t.getOccupant() == null) free.add(t);
-            }
-        }
-        return free;
     }
 
 }

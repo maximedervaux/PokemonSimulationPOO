@@ -7,14 +7,15 @@ import utils.RandomGenerator;
 public class WaterPokemon extends GoodPokemon{
 
     private static final int MAX_EP = 100;
+    private static int instanceCount = 0;
 
     public WaterPokemon() {
-        super(MasterWater.getInstance(), MAX_EP);   // impose le bon Master
+        super(MasterWater.getInstance(), MAX_EP);
+        WaterPokemon.instanceCount++;
     }
 
-    @Override
-    public void move(GameMap map, RandomGenerator random) {
-        // TODO
+    public static int getInstanceCount() {
+        return instanceCount;
     }
 
     @Override

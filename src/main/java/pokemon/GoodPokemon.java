@@ -6,4 +6,8 @@ public abstract class GoodPokemon extends Pokemon {
     protected GoodPokemon(Master master, int maxEp) {
         super(master, maxEp);
     }
+
+    public boolean isGood(){
+        return true;
+    }
 }

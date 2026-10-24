@@ -20,6 +20,14 @@ public class SafeZone {
         return _x0;
     }
 
+    public int getCenterX() {
+        return _x0 + _width / 2;
+    }
+
+    public int getCenterY() {
+        return _y0 + _height / 2;
+    }
+
     public boolean contains(int x, int y) {
         return x >= _x0 && x < _x0 + _width && y >= _y0 && y < _y0 + _height;
     }

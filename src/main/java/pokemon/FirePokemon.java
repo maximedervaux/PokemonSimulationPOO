@@ -6,14 +6,15 @@ import utils.RandomGenerator;
 
 public class FirePokemon extends GoodPokemon{
     private static final int MAX_EP = 100;
+    private static int instanceCount = 0;
 
     public FirePokemon() {
-        super(MasterFire.getInstance(), MAX_EP);   // impose le bon Master
+        super(MasterFire.getInstance(), MAX_EP);
+        FirePokemon.instanceCount++;
     }
 
-    @Override
-    public void move(GameMap map, RandomGenerator random) {
-        // TODO
+    public static int getInstanceCount() {
+        return instanceCount;
     }
 
     @Override
