@@ -15,14 +15,14 @@ import java.util.*;
 public abstract class Pokemon extends Occupant {
     private static int instanceCount = 0;
 
-    protected final Master master;
-    protected final Set<Message> messages = new HashSet<>();
-    protected final int maxEp;
-    protected int ep;
-    protected Direction lastDirection;
+    private final Master master;
+    private final Set<Message> messages = new HashSet<>();
+    private final int maxEp;
+    private int ep;
+    private Direction lastDirection;
 
-    protected static final int EP_PER_TILE = 2;
-    protected static final int REGEN_PER_STEP = 10;
+    private static final int EP_PER_TILE = 2;
+    private static final int REGEN_PER_STEP = 10;
     public abstract boolean isGood();
 
     protected Pokemon(Master master, int maxEp) {
@@ -49,7 +49,7 @@ public abstract class Pokemon extends Occupant {
     }
 
     public Set<Message> getMessages() {
-        return messages;
+        return Collections.unmodifiableSet(messages);
     }
 
     public boolean learn(Message m) {
@@ -64,7 +64,7 @@ public abstract class Pokemon extends Occupant {
         messages.removeAll(toRemove);
     }
 
-    public void loseAllMessages() {
+    private void loseAllMessages() {
         messages.clear();
     }
 
@@ -84,19 +84,15 @@ public abstract class Pokemon extends Occupant {
         return ep <= 0;
     }
 
-    public void spendEp(int amount) {
+    private void spendEp(int amount) {
         ep = Math.max(0, ep - amount);
     }
 
-    public void restoreEp(int amount) {
+    private void restoreEp(int amount) {
         ep = Math.min(maxEp, ep + amount);
     }
 
-    public Direction getLastDirection() {
-        return lastDirection;
-    }
-
-    protected void setLastDirection(Direction d) {
+    private void setLastDirection(Direction d) {
         this.lastDirection = d;
     }
 
@@ -183,14 +179,14 @@ public abstract class Pokemon extends Occupant {
         setLastDirection(dir);
     }
 
-    protected boolean isInSafeZone(GameMap map) {
+    private boolean isInSafeZone(GameMap map) {
         Tile current = getTile();
         if (current == null) return false;
         SafeZone zone = map.getSafeZoneAt(current.getX(), current.getY());
         return zone != null && zone.getMaster() == this.master;
     }
 
-    protected void afterTravel(GameMap map) {
+    private void afterTravel(GameMap map) {
         if (isInSafeZone(map)) {
             restoreEp(REGEN_PER_STEP);
         }
@@ -200,7 +196,7 @@ public abstract class Pokemon extends Occupant {
         }
     }
 
-    protected void deliverToMaster(GameMap map) {
+    private void deliverToMaster(GameMap map) {
         Tile mine = getTile();
         Tile masterTile = master.getTile();
         if (mine == null || masterTile == null) return;

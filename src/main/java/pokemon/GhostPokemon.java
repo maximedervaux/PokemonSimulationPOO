@@ -1,8 +1,6 @@
 package pokemon;
 
-import environment.GameMap;
 import master.MasterGhost;
-import utils.RandomGenerator;
 
 public class GhostPokemon extends BadPokemon{
     private static final int MAX_EP = 100;

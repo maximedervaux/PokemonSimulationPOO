@@ -3,6 +3,10 @@ package render;
 import environment.GameMap;
 import environment.Occupant;
 import master.Master;
+import master.MasterFire;
+import master.MasterGhost;
+import master.MasterPoison;
+import master.MasterWater;
 import simulation.Simulation;
 
 public class ConsoleRenderer implements Renderer {
@@ -16,6 +20,14 @@ public class ConsoleRenderer implements Renderer {
         sb.append(drawScores(sim));
 
         System.out.print(sb);
+    }
+
+    @Override
+    public void renderFinal(Simulation sim) {
+        System.out.println("Scores - F:" + MasterFire.getInstance().getScore()
+                + " W:" + MasterWater.getInstance().getScore()
+                + " G:" + MasterGhost.getInstance().getScore()
+                + " P:" + MasterPoison.getInstance().getScore());
     }
 
     /** Occupant -> its symbol, SafeZone -> 'S', empty tile -> '.' */

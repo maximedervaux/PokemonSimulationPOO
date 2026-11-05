@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
-/** Accès aux paramètres de simulation.properties. */
 public final class Config {
     private static final String FILE = "simulation.properties";
 
@@ -30,10 +29,22 @@ public final class Config {
     }
 
     public String getString(String key) {
-        String value = _properties.getProperty(key);
+        String value = System.getProperty(key, _properties.getProperty(key));
         if (value == null) {
             throw new NoSuchElementException("Paramètre absent de " + FILE + " : " + key);
         }
         return value;
+    }
+
+    public int getInt(String key) {
+        return Integer.parseInt(getString(key));
+    }
+
+    public long getLong(String key) {
+        return Long.parseLong(getString(key));
+    }
+
+    public double getDouble(String key) {
+        return Double.parseDouble(getString(key));
     }
 }

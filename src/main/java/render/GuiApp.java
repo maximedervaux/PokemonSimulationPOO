@@ -5,20 +5,25 @@ import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.util.Duration;
 import simulation.Simulation;
+import utils.Config;
 
 import java.io.IOException;
 
 public class GuiApp extends GameApplication {
-    private static final int MAP_SIZE = 25;          // doit correspondre à la taille de GameMap
-
+    private Config config;
     private Simulation sim;
     private GuiRenderer renderer;
-    private boolean announced = false;
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(MAP_SIZE * GuiRenderer.CELL);
-        settings.setHeight(MAP_SIZE * GuiRenderer.CELL + GuiRenderer.HUD_HEIGHT);
+        try {
+            config = Config.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        settings.setWidth(config.getInt("map.width") * GuiRenderer.CELL);
+        settings.setHeight(config.getInt("map.height") * GuiRenderer.CELL + GuiRenderer.HUD_HEIGHT);
         settings.setTitle("Pokemon Simulation");
         settings.setMainMenuEnabled(false);
     }
@@ -26,7 +31,7 @@ public class GuiApp extends GameApplication {
     @Override
     protected void initGame() {
         try {
-            sim = new Simulation(4, 48);             // 4 mobiles par population, 48 messages
+            sim = new Simulation(config);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -39,10 +44,8 @@ public class GuiApp extends GameApplication {
             if (!sim.isFinished()) {
                 sim.step();
                 renderer.render(sim);
-            } else if (!announced) {
-                announced = true;
             }
-        }, Duration.seconds(0.3));
+        }, Duration.millis(config.getLong("simulation.step.delay.ms")));
     }
 
     public static void main(String[] args) {

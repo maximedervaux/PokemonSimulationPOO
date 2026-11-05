@@ -1,8 +1,6 @@
 package pokemon;
 
-import environment.GameMap;
 import master.MasterWater;
-import utils.RandomGenerator;
 
 public class WaterPokemon extends GoodPokemon{
 

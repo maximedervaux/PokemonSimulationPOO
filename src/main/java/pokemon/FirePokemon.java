@@ -1,8 +1,6 @@
 package pokemon;
 
-import environment.GameMap;
 import master.MasterFire;
-import utils.RandomGenerator;
 
 public class FirePokemon extends GoodPokemon{
     private static final int MAX_EP = 100;

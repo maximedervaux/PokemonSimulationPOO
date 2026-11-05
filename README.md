@@ -81,9 +81,25 @@ messages et 15,7 agents sur 16 sont morts en moyenne.
 Le fichier `src/main/resources/simulation.properties` contient les paramètres
 modifiables sans changer le code :
 
-| Clé | Rôle |
-|---|---|
-| `messages.resource` | Ressource du classpath contenant les messages |
+| Clé | Rôle | Valeur |
+|---|---|---|
+| `simulation.seed` | Graine du générateur pseudo-aléatoire | 67 |
+| `simulation.max.steps` | Nombre maximal d'étapes | 3000 |
+| `simulation.step.delay.ms` | Pause entre deux étapes, en millisecondes | 300 |
+| `map.width` | Largeur de la carte, en cases | 25 |
+| `map.height` | Hauteur de la carte, en cases | 25 |
+| `map.obstacle.density` | Probabilité d'obstacle par case hors SafeZone | 0.05 |
+| `pokemon.per.type` | Nombre d'agents par population | 4 |
+| `messages.count` | Nombre de messages à collecter | 48 |
+| `messages.resource` | Ressource du classpath contenant les messages | `messages.txt` |
+
+Chaque clé peut être remplacée au lancement :
+
+```bash
+mvn exec:java -Dsimulation.seed=42 -Dsimulation.step.delay.ms=0
+```
+
+Une même graine et une même configuration donnent toujours le même résultat.
 
 ## Structure du code
 

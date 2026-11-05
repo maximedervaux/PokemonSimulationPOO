@@ -1,5 +1,0 @@
-package enums;
-
-enum PokemonType{
-
-}

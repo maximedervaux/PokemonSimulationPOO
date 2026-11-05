@@ -10,12 +10,6 @@ public class Tile {
         this._y = y;
     }
 
-    Tile(int x, int y, Occupant occupant){
-        this._x = x;
-        this._y = y;
-        this._occupant = occupant;
-    }
-
     public int getX() {
         return this._x;
     }
@@ -28,7 +22,7 @@ public class Tile {
         return _occupant;
     }
 
-    public void setOccupant(Occupant _occupant) {
+    void setOccupant(Occupant _occupant) {
         this._occupant = _occupant;
     }
 
