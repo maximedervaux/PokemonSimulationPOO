@@ -13,10 +13,10 @@ import master.MasterWater;
 import master.Master;
 import pokemon.*;
 import render.Renderer;
+import utils.Config;
 import utils.RandomGenerator;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -81,7 +81,8 @@ public class Simulation {
     }
 
     private void generateMessages(int count) throws IOException {
-        this._universe = MessageFactory.load(Path.of("./src/main/data/messages.txt"), count, _random);
+        String resource = Config.load().getString("messages.resource");
+        this._universe = MessageFactory.load(resource, count, _random);
         this.distributeMessages(_universe);
     }
 

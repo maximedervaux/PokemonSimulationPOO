@@ -1,16 +1,27 @@
 package interaction;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class MessageFactory {
     private MessageFactory() { }
 
-    public static List<Message> load(Path file, int count, utils.RandomGenerator random) throws IOException {
-        List<String> lines = new ArrayList<>(Files.readAllLines(file));
+    public static List<Message> load(String resource, int count, utils.RandomGenerator random) throws IOException {
+        InputStream in = MessageFactory.class.getClassLoader().getResourceAsStream(resource);
+        if (in == null) {
+            throw new FileNotFoundException("Ressource introuvable : " + resource);
+        }
+
+        List<String> lines;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            lines = new ArrayList<>(reader.lines().toList());
+        }
         lines.removeIf(String::isBlank);
 
         if (count > lines.size()) {
