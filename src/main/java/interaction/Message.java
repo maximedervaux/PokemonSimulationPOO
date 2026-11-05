@@ -28,9 +28,4 @@ public class Message {
     public static void resetCounter() {
         instanceCount = 0;
     }
-
-
-
-
-
 }

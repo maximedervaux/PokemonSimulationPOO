@@ -8,7 +8,6 @@ import utils.RandomGenerator;
 import java.util.*;
 
 public class GameMap {
-
     private int _height = 0;
     private int _width = 0;
     private final List<List<Tile>> tiles = new ArrayList<>();
@@ -32,6 +31,14 @@ public class GameMap {
 
         // Finally, we generate the obstacles
         this.generateObstacles(random, density);
+    }
+
+    public int getHeight() {
+        return _height;
+    }
+
+    public int getWidth() {
+        return _width;
     }
 
     private void createSafeZone(){
@@ -176,33 +183,4 @@ public class GameMap {
         current.setOccupant(new Obstacle());
         pokemon.setTile(null);
     }
-
-    /**
-     * Method to debug till we get UI.
-     * Occupant -> its symbol (# obstacle, F/W/g/p masters...),
-     * SafeZone -> 'S', empty tile -> '.'
-     * Export it in the right class
-     */
-    public void printDebug() {
-        StringBuilder sb = new StringBuilder();
-        for (int y = 0; y < this._height; y++) {
-            for (int x = 0; x < this._width; x++) {
-                Tile tile = getTile(x, y);
-                Occupant occupant = tile.getOccupant();
-
-                String symbol;
-                if (occupant != null) {
-                    symbol = occupant.getSymbol();
-                } else if (getSafeZoneAt(x, y) != null) {
-                    symbol = "S";
-                } else {
-                    symbol = ".";
-                }
-                sb.append(symbol).append(' ');
-            }
-            sb.append('\n');
-        }
-        System.out.print(sb);
-    }
-
 }
