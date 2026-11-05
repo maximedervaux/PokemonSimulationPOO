@@ -20,9 +20,11 @@ public abstract class Pokemon extends Occupant {
     private final int maxEp;
     private int ep;
     private Direction lastDirection;
+    private boolean blockedLastMove = false;
 
-    private static final int EP_PER_TILE = 2;
+    private static final int EP_PER_TILE = 1;
     private static final int REGEN_PER_STEP = 10;
+    private static final int[] DETOUR_OFFSETS = {0, 1, -1, 2, -2, 3, -3, 4};
     public abstract boolean isGood();
 
     protected Pokemon(Master master, int maxEp) {
@@ -106,7 +108,8 @@ public abstract class Pokemon extends Occupant {
         Direction dir = chooseDirection(map, random);
 
         if (dir != null) {
-            int distance = chooseDistance(random);
+            // En retour, une case par tour : la direction est recalculée pour contourner les blocages
+            int distance = isLowEnergy() ? 1 : chooseDistance(random);
             travel(map, dir, distance, random);
         }
         deliverToMaster(map);
@@ -117,17 +120,51 @@ public abstract class Pokemon extends Occupant {
         if (isLowEnergy()) {
             Direction home = map.directionToSafeZone(this);
             if (home != null) {
-                return home;
+                return firstOpenDirection(map, home);
             }
             if (isInSafeZone(map)) {
                 return null;
             }
         }
-        Direction dir;
-        do {
-            dir = random.pickRandom(Direction.all());
-        } while (dir == lastDirection);
-        return dir;
+        return randomDirection(map, random);
+    }
+
+    /** Direction aléatoire vers une case accessible, sans refaire le déplacement qui vient d'être bloqué. */
+    private Direction randomDirection(GameMap map, RandomGenerator random) {
+        Tile current = getTile();
+        List<Direction> options = new ArrayList<>();
+        for (Tile tile : map.getTilesAround(current.getX(), current.getY())) {
+            Direction dir = Direction.fromDelta(tile.getX() - current.getX(), tile.getY() - current.getY());
+            boolean justBlocked = blockedLastMove && dir == lastDirection;
+            if (canEnter(map, tile) && !justBlocked) {
+                options.add(dir);
+            }
+        }
+        return random.pickRandom(options);
+    }
+
+    /** Contourne un blocage : essaie la direction souhaitée, puis les directions de plus en plus éloignées. */
+    private Direction firstOpenDirection(GameMap map, Direction wanted) {
+        Tile current = getTile();
+        for (int offset : DETOUR_OFFSETS) {
+            Direction dir = wanted.rotated(offset);
+            int nx = current.getX() + dir.getDx();
+            int ny = current.getY() + dir.getDy();
+            if (!map.isInside(nx, ny)) continue;
+
+            Tile tile = map.getTile(nx, ny);
+            boolean hasObstacle = tile.getOccupant() != null && tile.getOccupant().isObstacle();
+            if (canEnter(map, tile) && !hasObstacle) {
+                return dir;
+            }
+        }
+        return null;
+    }
+
+    /** Seule la population du Master peut entrer dans sa SafeZone. */
+    private boolean canEnter(GameMap map, Tile tile) {
+        SafeZone zone = map.getSafeZoneAt(tile.getX(), tile.getY());
+        return zone == null || zone.getMaster() == this.master;
     }
 
     protected int chooseDistance(RandomGenerator random) {
@@ -136,6 +173,7 @@ public abstract class Pokemon extends Occupant {
 
     private void travel(GameMap map, Direction dir, int distance, RandomGenerator random) {
         Tile current = getTile();
+        blockedLastMove = false;
 
         for (int step = 0; step < distance; step++) {
             int nx = current.getX() + dir.getDx();
@@ -143,16 +181,15 @@ public abstract class Pokemon extends Occupant {
 
             // Case 1: Out of the map
             if (!map.isInside(nx, ny)) {
-                spendEp((distance - step) * EP_PER_TILE);
+                onBlocked(map, distance - step);
                 break;
             }
 
             Tile next = map.getTile(nx, ny);
 
             // Case 2: Not its safeZone
-            SafeZone zone = map.getSafeZoneAt(nx, ny);
-            if (zone != null && zone.getMaster() != this.master) {
-                spendEp((distance - step) * EP_PER_TILE);
+            if (!canEnter(map, next)) {
+                onBlocked(map, distance - step);
                 break;
             }
 
@@ -160,8 +197,8 @@ public abstract class Pokemon extends Occupant {
             Occupant occupant = next.getOccupant();
             if (occupant != null) {
                 if (occupant.isObstacle()) {
-                    spendEp((distance - step) * EP_PER_TILE);
-                } else if (occupant instanceof Pokemon other){
+                    onBlocked(map, distance - step);
+                } else if (occupant instanceof Pokemon other && !isConfrontationForbidden(map, other)) {
                     Encounter encounter = Encounter.between(this, other);
                     encounter.resolve(random);
                 }
@@ -173,10 +210,24 @@ public abstract class Pokemon extends Occupant {
             current = next;
             if (!isInSafeZone(map)) {
                 spendEp(EP_PER_TILE);
+                if (isExhausted()) break;
             }
         }
 
         setLastDirection(dir);
+    }
+
+    /** Un blocage coûte les cases restantes, sauf dans sa propre SafeZone où aucun EP n'est dépensé. */
+    private void onBlocked(GameMap map, int remainingTiles) {
+        blockedLastMove = true;
+        if (!isInSafeZone(map)) {
+            spendEp(remainingTiles * EP_PER_TILE);
+        }
+    }
+
+    /** Aucune confrontation depuis une SafeZone. */
+    private boolean isConfrontationForbidden(GameMap map, Pokemon other) {
+        return !isSameAlliance(other) && isInSafeZone(map);
     }
 
     private boolean isInSafeZone(GameMap map) {

@@ -30,6 +30,11 @@ public enum Direction {
         return dy;
     }
 
+    /** Direction obtenue en tournant de eighths huitièmes de tour dans le sens horaire. */
+    public Direction rotated(int eighths) {
+        return ALL.get(Math.floorMod(ordinal() + eighths, ALL.size()));
+    }
+
     public static List<Direction> all() {
         return ALL;
     }

@@ -119,7 +119,7 @@ public class Simulation {
     }
 
     public boolean isFinished() {
-        return _step >= _maxSteps || this.anyMasterHasAllMessages();
+        return _step >= _maxSteps || _mobiles.isEmpty() || this.anyMasterHasAllMessages();
     }
 
     private boolean anyMasterHasAllMessages() {

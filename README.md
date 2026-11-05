@@ -41,11 +41,14 @@ Le sujet laisse plusieurs règles à définir. Voici celles du code actuel.
 
 - À chaque étape, l'ordre des agents est tiré au hasard et chacun se déplace une fois.
 - Un agent avance de 1 à 3 cases dans une direction.
-- Avec 20 % d'EP ou plus, la direction est aléatoire et différente de la précédente.
-- Sous 20 % d'EP, l'agent se dirige vers son Master.
-- Un agent bloqué par un obstacle, le bord de la carte ou une zone étrangère perd
-  l'EP des cases qu'il lui restait à parcourir.
-- À 0 EP, l'agent perd ses messages et devient un obstacle.
+- Avec 20 % d'EP ou plus, la direction est tirée au hasard parmi celles qui mènent à
+  une case de la carte, hors zone étrangère. La direction qui vient d'être bloquée est exclue.
+- Sous 20 % d'EP, l'agent se dirige vers son Master, une case par tour, et contourne
+  les obstacles et les zones étrangères.
+- L'EP n'est dépensé qu'en dehors de sa propre SafeZone.
+- Hors de sa SafeZone, un agent bloqué par un obstacle, le bord de la carte ou une zone
+  étrangère perd l'EP des cases qu'il lui restait à parcourir.
+- À 0 EP, l'agent s'arrête aussitôt, perd ses messages et devient un obstacle.
 
 ### Rencontres et score
 
@@ -57,24 +60,30 @@ Une rencontre a lieu seulement si un autre agent se trouve sur le trajet.
 | Même alliance | Chacun reçoit au hasard une partie des messages qui lui manquent |
 | Alliances opposées | Combat : les chances de gagner sont proportionnelles à l'EP, et le vainqueur prend au hasard des messages au perdant |
 
+Un agent dans sa SafeZone ne combat pas : s'il rencontre un adversaire juste en dehors,
+il s'arrête sans autre effet.
+
 Un agent livre une copie de ses messages lorsqu'il termine son tour sur une case
 adjacente à son Master.
 
-La simulation s'arrête lorsqu'un Master possède tous les messages, ou au bout de
-3000 étapes.
+La simulation s'arrête lorsqu'un Master possède tous les messages, lorsqu'il ne reste
+plus aucun agent mobile, ou au bout de 3000 étapes.
 
 ## Calibrage
 
 | Paramètre | Valeur |
 |---|---|
 | EP maximum | 100 |
-| Coût par case | 2 EP |
+| Coût par case | 1 EP |
 | Récupération en SafeZone | 10 EP par étape |
 | Seuil de retour | 20 % des EP |
 | Graine aléatoire | 67 |
 
-**Ce calibrage reste à revoir.** Sur 200 graines, aucun groupe n'a collecté tous les
-messages et 15,7 agents sur 16 sont morts en moyenne.
+Avec ces valeurs, sur 200 graines (1000 à 1199) :
+
+- un groupe collecte tous les messages dans 198 runs ;
+- 15,4 agents sur 16 sont encore vivants en fin de run, en moyenne ;
+- la simulation s'arrête après 205 étapes (médiane).
 
 ## Configuration
 
