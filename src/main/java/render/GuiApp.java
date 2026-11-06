@@ -22,7 +22,7 @@ public class GuiApp extends GameApplication {
             throw new RuntimeException(e);
         }
 
-        settings.setWidth(config.getInt("map.width") * GuiRenderer.CELL);
+        settings.setWidth(config.getInt("map.width") * GuiRenderer.CELL + GuiRenderer.PANEL_WIDTH);
         settings.setHeight(config.getInt("map.height") * GuiRenderer.CELL + GuiRenderer.HUD_HEIGHT);
         settings.setTitle("Pokemon Simulation");
         settings.setMainMenuEnabled(false);
@@ -44,6 +44,9 @@ public class GuiApp extends GameApplication {
             if (!sim.isFinished()) {
                 sim.step();
                 renderer.render(sim);
+                if (sim.isFinished()) {
+                    renderer.renderFinal(sim);
+                }
             }
         }, Duration.millis(config.getLong("simulation.step.delay.ms")));
     }

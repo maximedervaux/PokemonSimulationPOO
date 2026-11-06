@@ -35,10 +35,18 @@ public abstract class Master extends Occupant {
         map = null;
     }
 
-    /** Union des messages d'un mobile dans ceux du Master (pas de doublon grâce au Set). */
-    public void collect(Set<Message> delivered) {
+    /**
+     * Union des messages d'un mobile dans ceux du Master (pas de doublon grâce au Set).
+     * @return le nombre de nouveaux messages
+     */
+    public int collect(Set<Message> delivered) {
+        int before = messages.size();
         messages.addAll(delivered);
+        return messages.size() - before;
     }
+
+    /** Nom du groupe dirigé par ce Master. */
+    public abstract String getGroupName();
 
     /** Score du groupe : nombre de messages distincts détenus par le Master. */
     public int getScore() { return messages.size(); }

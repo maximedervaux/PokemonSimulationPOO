@@ -17,6 +17,7 @@ import utils.RandomGenerator;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -26,6 +27,7 @@ public class Simulation {
     private final int _numberOfPokemonPerType;
     private final int _maxSteps;
     private final List<Pokemon> _mobiles = new ArrayList<>();
+    private final List<String> _events = new ArrayList<>();
     private List<Message> _universe;
     private int _step = 0;
 
@@ -95,10 +97,11 @@ public class Simulation {
     }
 
     public void step() {
+        _events.clear();
         _random.shuffle(_mobiles);
         for (Pokemon poke : _mobiles) {
             if (!poke.isExhausted()) {
-                poke.move(_map, _random);
+                poke.move(_map, _random, _events);
             }
         }
         _mobiles.removeIf(Pokemon::isExhausted);
@@ -116,6 +119,26 @@ public class Simulation {
     public List<Master> getMasters() {
         return List.of(MasterFire.getInstance(), MasterWater.getInstance(),
                 MasterGhost.getInstance(), MasterPoison.getInstance());
+    }
+
+    /** Agents encore actifs. */
+    public List<Pokemon> getMobiles() {
+        return Collections.unmodifiableList(_mobiles);
+    }
+
+    /** Ce qui s'est passé pendant la dernière étape. */
+    public List<String> getEvents() {
+        return Collections.unmodifiableList(_events);
+    }
+
+    public int getExhaustedCount() {
+        return getMasters().size() * _numberOfPokemonPerType - _mobiles.size();
+    }
+
+    /** Masters ayant le meilleur score : un seul en cas de victoire, plusieurs en cas d'égalité. */
+    public List<Master> getWinners() {
+        int best = getMasters().stream().mapToInt(Master::getScore).max().orElse(0);
+        return getMasters().stream().filter(m -> m.getScore() == best).toList();
     }
 
     public boolean isFinished() {

@@ -35,7 +35,7 @@ Le sujet laisse plusieurs règles à définir. Voici celles du code actuel.
 - Chaque SafeZone fait 7 × 7 cases et seule sa population peut y entrer.
 - Chaque Master (`M`) reste immobile dans le coin de la carte, dans sa SafeZone.
 - Chaque population compte 4 agents mobiles.
-- Les 48 messages sont répartis entre les agents au démarrage.
+- 48 messages, tirés parmi 50 textes distincts, sont répartis entre les agents au démarrage.
 
 ### Déplacement et énergie
 
@@ -67,7 +67,21 @@ Un agent livre une copie de ses messages lorsqu'il termine son tour sur une case
 adjacente à son Master.
 
 La simulation s'arrête lorsqu'un Master possède tous les messages, lorsqu'il ne reste
-plus aucun agent mobile, ou au bout de 3000 étapes.
+plus aucun agent mobile, ou au bout de 3000 étapes. Le groupe dont le Master a le plus
+de messages gagne ; à score égal, les groupes concernés sont à égalité.
+
+## Affichage
+
+À chaque étape, la console et l'interface graphique montrent :
+
+- la carte et le score de chaque groupe ;
+- l'EP et le nombre de messages de chaque agent actif, par exemple `F3 96EP 2msg` ;
+- le nombre d'agents épuisés ;
+- les compteurs d'instances (`Pokemon`, chaque population, `Master`, `Message`) ;
+- les événements : combats, échanges, unions, livraisons et épuisements.
+
+Le résultat final s'affiche à la fin de la simulation. L'interface graphique garde les
+12 derniers événements dans son journal.
 
 ## Calibrage
 
@@ -81,9 +95,10 @@ plus aucun agent mobile, ou au bout de 3000 étapes.
 
 Avec ces valeurs, sur 200 graines (1000 à 1199) :
 
-- un groupe collecte tous les messages dans 198 runs ;
+- un groupe collecte tous les messages dans 196 runs ;
 - 15,4 agents sur 16 sont encore vivants en fin de run, en moyenne ;
-- la simulation s'arrête après 205 étapes (médiane).
+- la simulation s'arrête après 208 étapes (médiane) ;
+- les victoires se répartissent en Fire 50, Water 46, Ghost 50, Poison 49, avec 5 égalités.
 
 ## Configuration
 

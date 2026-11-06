@@ -15,4 +15,7 @@ public class MasterFire extends Master{
         return instance;
     }
 
+    @Override
+    public String getGroupName() { return "Fire"; }
+
 }

@@ -20,13 +20,12 @@ public final class MessageFactory {
 
         List<String> lines;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            lines = new ArrayList<>(reader.lines().toList());
+            lines = new ArrayList<>(reader.lines().map(String::trim).filter(line -> !line.isEmpty()).distinct().toList());
         }
-        lines.removeIf(String::isBlank);
 
         if (count > lines.size()) {
             throw new IllegalArgumentException(
-                    "Demandé " + count + " messages, le fichier n'en contient que " + lines.size());
+                    "Demandé " + count + " messages, le fichier n'en contient que " + lines.size() + " distincts");
         }
 
         Message.resetCounter();
@@ -34,7 +33,7 @@ public final class MessageFactory {
 
         List<Message> universe = new ArrayList<>();
         for (String line : lines.subList(0, count)) {
-            universe.add(new Message(line.trim()));
+            universe.add(new Message(line));
         }
         return universe;
     }
