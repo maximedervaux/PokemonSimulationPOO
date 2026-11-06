@@ -7,7 +7,8 @@ public abstract class Occupant {
         return tile;
     }
 
-    public void setTile(Tile tile) { this.tile = tile; }
+    /** Réservé à GameMap, qui garde la case et son occupant cohérents. */
+    void setTile(Tile tile) { this.tile = tile; }
 
     public abstract boolean isObstacle();
 

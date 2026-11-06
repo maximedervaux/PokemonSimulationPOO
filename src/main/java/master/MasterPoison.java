@@ -15,4 +15,7 @@ public class MasterPoison extends Master{
         return instance;
     }
 
+    @Override
+    public String getGroupName() { return "Poison"; }
+
 }

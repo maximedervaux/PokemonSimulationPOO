@@ -15,25 +15,40 @@ import java.util.*;
 public abstract class Pokemon extends Occupant {
     private static int instanceCount = 0;
 
-    protected final Master master;
-    protected final Set<Message> messages = new HashSet<>();
-    protected final int maxEp;
-    protected int ep;
-    protected Direction lastDirection;
+    private final int id;
+    private final Master master;
+    private final Set<Message> messages = new HashSet<>();
+    private final int maxEp;
+    private int ep;
+    private Direction lastDirection;
+    private boolean blockedLastMove = false;
 
-    protected static final int EP_PER_TILE = 2;
-    protected static final int REGEN_PER_STEP = 10;
+    private static final int EP_PER_TILE = 1;
+    private static final int REGEN_PER_STEP = 10;
+    private static final int[] DETOUR_OFFSETS = {0, 1, -1, 2, -2, 3, -3, 4};
     public abstract boolean isGood();
+
+    /** Directions que cette population peut emprunter. */
+    protected abstract List<Direction> allowedDirections();
 
     protected Pokemon(Master master, int maxEp) {
         this.master = master;
         this.maxEp = maxEp;
         this.ep = maxEp;
-        instanceCount++;
+        this.id = ++instanceCount;
     }
 
     public static int getInstanceCount() {
         return instanceCount;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    /** Nom affiché de cet individu, par exemple F3. */
+    public String getLabel() {
+        return getSymbol() + id;
     }
 
     public Master getMaster() {
@@ -49,7 +64,7 @@ public abstract class Pokemon extends Occupant {
     }
 
     public Set<Message> getMessages() {
-        return messages;
+        return Collections.unmodifiableSet(messages);
     }
 
     public boolean learn(Message m) {
@@ -64,7 +79,7 @@ public abstract class Pokemon extends Occupant {
         messages.removeAll(toRemove);
     }
 
-    public void loseAllMessages() {
+    private void loseAllMessages() {
         messages.clear();
     }
 
@@ -84,19 +99,15 @@ public abstract class Pokemon extends Occupant {
         return ep <= 0;
     }
 
-    public void spendEp(int amount) {
+    private void spendEp(int amount) {
         ep = Math.max(0, ep - amount);
     }
 
-    public void restoreEp(int amount) {
+    private void restoreEp(int amount) {
         ep = Math.min(maxEp, ep + amount);
     }
 
-    public Direction getLastDirection() {
-        return lastDirection;
-    }
-
-    protected void setLastDirection(Direction d) {
+    private void setLastDirection(Direction d) {
         this.lastDirection = d;
     }
 
@@ -104,42 +115,86 @@ public abstract class Pokemon extends Occupant {
         return false;
     }
 
-    public void move(GameMap map, RandomGenerator random) {
+    /** Joue le tour de l'individu et ajoute à events ce qui s'y est passé. */
+    public void move(GameMap map, RandomGenerator random, List<String> events) {
         if (isExhausted()) return;
 
         Direction dir = chooseDirection(map, random);
 
         if (dir != null) {
-            int distance = chooseDistance(random);
-            travel(map, dir, distance, random);
+            // En retour, une case par tour : la direction est recalculée pour contourner les blocages
+            int distance = isLowEnergy() ? 1 : chooseDistance(random);
+            travel(map, dir, distance, random, events);
         }
-        deliverToMaster(map);
-        afterTravel(map);
+        deliverToMaster(map, events);
+        afterTravel(map, events);
     }
 
     protected Direction chooseDirection(GameMap map, RandomGenerator random) {
         if (isLowEnergy()) {
             Direction home = map.directionToSafeZone(this);
             if (home != null) {
-                return home;
+                return firstOpenDirection(map, home);
             }
             if (isInSafeZone(map)) {
                 return null;
             }
         }
-        Direction dir;
-        do {
-            dir = random.pickRandom(Direction.all());
-        } while (dir == lastDirection);
-        return dir;
+        return randomDirection(map, random);
+    }
+
+    /** Direction aléatoire vers une case accessible, sans refaire le déplacement qui vient d'être bloqué. */
+    private Direction randomDirection(GameMap map, RandomGenerator random) {
+        Tile current = getTile();
+        List<Direction> options = new ArrayList<>();
+        for (Tile tile : map.getTilesAround(current.getX(), current.getY())) {
+            Direction dir = Direction.fromDelta(tile.getX() - current.getX(), tile.getY() - current.getY());
+            boolean justBlocked = blockedLastMove && dir == lastDirection;
+            if (allowedDirections().contains(dir) && canEnter(map, tile) && !justBlocked) {
+                options.add(dir);
+            }
+        }
+        if (options.isEmpty()) {
+            // La seule issue vient d'être bloquée : elle redevient possible au tour suivant
+            blockedLastMove = false;
+            return null;
+        }
+        return random.pickRandom(options);
+    }
+
+    /** Contourne un blocage : essaie la direction souhaitée, puis les directions de plus en plus éloignées. */
+    private Direction firstOpenDirection(GameMap map, Direction wanted) {
+        Tile current = getTile();
+        for (int offset : DETOUR_OFFSETS) {
+            Direction dir = wanted.rotated(offset);
+            if (!allowedDirections().contains(dir)) continue;
+
+            int nx = current.getX() + dir.getDx();
+            int ny = current.getY() + dir.getDy();
+            if (!map.isInside(nx, ny)) continue;
+
+            Tile tile = map.getTile(nx, ny);
+            boolean hasObstacle = tile.getOccupant() != null && tile.getOccupant().isObstacle();
+            if (canEnter(map, tile) && !hasObstacle) {
+                return dir;
+            }
+        }
+        return null;
+    }
+
+    /** Seule la population du Master peut entrer dans sa SafeZone. */
+    private boolean canEnter(GameMap map, Tile tile) {
+        SafeZone zone = map.getSafeZoneAt(tile.getX(), tile.getY());
+        return zone == null || zone.getMaster() == this.master;
     }
 
     protected int chooseDistance(RandomGenerator random) {
         return random.nextInt(1, 3);
     }
 
-    private void travel(GameMap map, Direction dir, int distance, RandomGenerator random) {
+    private void travel(GameMap map, Direction dir, int distance, RandomGenerator random, List<String> events) {
         Tile current = getTile();
+        blockedLastMove = false;
 
         for (int step = 0; step < distance; step++) {
             int nx = current.getX() + dir.getDx();
@@ -147,16 +202,15 @@ public abstract class Pokemon extends Occupant {
 
             // Case 1: Out of the map
             if (!map.isInside(nx, ny)) {
-                spendEp((distance - step) * EP_PER_TILE);
+                onBlocked(map, distance - step);
                 break;
             }
 
             Tile next = map.getTile(nx, ny);
 
             // Case 2: Not its safeZone
-            SafeZone zone = map.getSafeZoneAt(nx, ny);
-            if (zone != null && zone.getMaster() != this.master) {
-                spendEp((distance - step) * EP_PER_TILE);
+            if (!canEnter(map, next)) {
+                onBlocked(map, distance - step);
                 break;
             }
 
@@ -164,10 +218,11 @@ public abstract class Pokemon extends Occupant {
             Occupant occupant = next.getOccupant();
             if (occupant != null) {
                 if (occupant.isObstacle()) {
-                    spendEp((distance - step) * EP_PER_TILE);
-                } else if (occupant instanceof Pokemon other){
+                    onBlocked(map, distance - step);
+                } else if (occupant instanceof Pokemon other && !isConfrontationForbidden(map, other)) {
                     Encounter encounter = Encounter.between(this, other);
                     encounter.resolve(random);
+                    events.add(encounter.describe());
                 }
                 break;
             }
@@ -177,30 +232,45 @@ public abstract class Pokemon extends Occupant {
             current = next;
             if (!isInSafeZone(map)) {
                 spendEp(EP_PER_TILE);
+                if (isExhausted()) break;
             }
         }
 
         setLastDirection(dir);
     }
 
-    protected boolean isInSafeZone(GameMap map) {
+    /** Un blocage coûte les cases restantes, sauf dans sa propre SafeZone où aucun EP n'est dépensé. */
+    private void onBlocked(GameMap map, int remainingTiles) {
+        blockedLastMove = true;
+        if (!isInSafeZone(map)) {
+            spendEp(remainingTiles * EP_PER_TILE);
+        }
+    }
+
+    /** Aucune confrontation depuis une SafeZone. */
+    private boolean isConfrontationForbidden(GameMap map, Pokemon other) {
+        return !isSameAlliance(other) && isInSafeZone(map);
+    }
+
+    private boolean isInSafeZone(GameMap map) {
         Tile current = getTile();
         if (current == null) return false;
         SafeZone zone = map.getSafeZoneAt(current.getX(), current.getY());
         return zone != null && zone.getMaster() == this.master;
     }
 
-    protected void afterTravel(GameMap map) {
+    private void afterTravel(GameMap map, List<String> events) {
         if (isInSafeZone(map)) {
             restoreEp(REGEN_PER_STEP);
         }
         if (isExhausted()) {
+            events.add(getLabel() + " épuisé : perd " + messages.size() + " message(s) et devient un obstacle");
             loseAllMessages();
             map.convertToObstacle(this);
         }
     }
 
-    protected void deliverToMaster(GameMap map) {
+    private void deliverToMaster(GameMap map, List<String> events) {
         Tile mine = getTile();
         Tile masterTile = master.getTile();
         if (mine == null || masterTile == null) return;
@@ -210,7 +280,10 @@ public abstract class Pokemon extends Occupant {
 
         boolean adjacent = dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0);
         if (adjacent) {
-            master.collect(this.messages);
+            int delivered = master.collect(this.messages);
+            if (delivered > 0) {
+                events.add(getLabel() + " livre " + delivered + " message(s) au Master " + master.getGroupName());
+            }
         }
     }
 }

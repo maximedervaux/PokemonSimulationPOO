@@ -13,9 +13,18 @@ public class ConsoleRenderer implements Renderer {
 
         sb.append("=== Step ").append(sim.getStep()).append(" ===\n");
         sb.append(drawMap(sim.getMap()));
-        sb.append(drawScores(sim));
+        sb.append("Scores - ").append(ReportText.scores(sim)).append('\n');
+        sb.append(drawAgents(sim));
+        sb.append("Agents épuisés : ").append(sim.getExhaustedCount()).append('\n');
+        sb.append("Instances - ").append(ReportText.instances()).append('\n');
+        sb.append(drawEvents(sim));
 
         System.out.print(sb);
+    }
+
+    @Override
+    public void renderFinal(Simulation sim) {
+        System.out.println("Résultat - " + ReportText.result(sim));
     }
 
     /** Occupant -> its symbol, SafeZone -> 'S', empty tile -> '.' */
@@ -40,11 +49,21 @@ public class ConsoleRenderer implements Renderer {
         return sb.toString();
     }
 
-    private String drawScores(Simulation sim) {
-        StringBuilder sb = new StringBuilder("Scores - ");
+    private String drawAgents(Simulation sim) {
+        StringBuilder sb = new StringBuilder();
         for (Master m : sim.getMasters()) {
-            sb.append(m.getSymbol()).append(": ").append(m.getScore()).append("  ");
+            sb.append(String.format("%-6s : ", m.getGroupName()))
+                    .append(String.join("  ", ReportText.agents(sim, m)))
+                    .append('\n');
         }
-        return sb.append('\n').toString();
+        return sb.toString();
+    }
+
+    private String drawEvents(Simulation sim) {
+        StringBuilder sb = new StringBuilder();
+        for (String event : sim.getEvents()) {
+            sb.append("  > ").append(event).append('\n');
+        }
+        return sb.toString();
     }
 }

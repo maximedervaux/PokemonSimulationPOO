@@ -1,12 +1,14 @@
 package pokemon;
 
-import environment.GameMap;
+import enums.Direction;
 import master.MasterWater;
-import utils.RandomGenerator;
+
+import java.util.List;
 
 public class WaterPokemon extends GoodPokemon{
 
-    private static final int MAX_EP = 100;
+    // Le seuil de retour (20 % = 40 EP) couvre les 40 cases du plus long retour en ligne droite
+    private static final int MAX_EP = 200;
     private static int instanceCount = 0;
 
     public WaterPokemon() {
@@ -20,4 +22,10 @@ public class WaterPokemon extends GoodPokemon{
 
     @Override
     public String getSymbol() { return "W"; }
+
+    /** Se déplace comme une tour : en ligne droite. */
+    @Override
+    protected List<Direction> allowedDirections() {
+        return Direction.orthogonals();
+    }
 }

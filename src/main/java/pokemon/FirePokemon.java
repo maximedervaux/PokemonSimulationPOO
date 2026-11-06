@@ -1,8 +1,9 @@
 package pokemon;
 
-import environment.GameMap;
+import enums.Direction;
 import master.MasterFire;
-import utils.RandomGenerator;
+
+import java.util.List;
 
 public class FirePokemon extends GoodPokemon{
     private static final int MAX_EP = 100;
@@ -19,4 +20,10 @@ public class FirePokemon extends GoodPokemon{
 
     @Override
     public String getSymbol() { return "F"; }
+
+    /** Se déplace comme un fou : en diagonale. */
+    @Override
+    protected List<Direction> allowedDirections() {
+        return Direction.diagonals();
+    }
 }

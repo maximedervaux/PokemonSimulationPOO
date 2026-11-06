@@ -8,6 +8,7 @@ import java.util.List;
 
 public class Battle extends Encounter {
     private Pokemon winner;
+    private int stolenCount = 0;
 
     public Battle(Pokemon firstPokemon, Pokemon secondPokemon) {
         super(firstPokemon, secondPokemon);
@@ -29,7 +30,11 @@ public class Battle extends Encounter {
         List<Message> taken = random.pickSubset(stolen, k);
         winner.learnAll(new HashSet<>(taken));
         loser.removeMessages(taken);
+        stolenCount = taken.size();
     }
 
-    @Override public String describe() { return _firstPokemon.getSymbol() + " vs " + _secondPokemon.getSymbol() + " : " + (winner == null ? "?" : winner.getSymbol() + " wins"); }
+    @Override public String describe() {
+        return _firstPokemon.getLabel() + " vs " + _secondPokemon.getLabel() + " : "
+                + winner.getLabel() + " gagne et prend " + stolenCount + " message(s)";
+    }
 }

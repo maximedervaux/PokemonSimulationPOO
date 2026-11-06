@@ -25,7 +25,18 @@ public class Message {
         return instanceCount;
     }
 
-    public static void resetCounter() {
+    static void resetCounter() {
         instanceCount = 0;
+    }
+
+    /** L'identité repose sur l'id : l'ordre des HashSet, donc les runs, ne dépend que de la graine. */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof Message message && this._id == message._id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(_id);
     }
 }

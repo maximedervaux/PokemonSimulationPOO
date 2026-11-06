@@ -14,4 +14,7 @@ public class MasterGhost extends Master{
 
         return instance;
     }
+
+    @Override
+    public String getGroupName() { return "Ghost"; }
 }

@@ -12,12 +12,12 @@ import master.MasterPoison;
 import master.MasterWater;
 import master.Master;
 import pokemon.*;
-import render.Renderer;
+import utils.Config;
 import utils.RandomGenerator;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -25,20 +25,22 @@ public class Simulation {
     private final GameMap _map;
     private final RandomGenerator _random;
     private final int _numberOfPokemonPerType;
+    private final int _maxSteps;
     private final List<Pokemon> _mobiles = new ArrayList<>();
+    private final List<String> _events = new ArrayList<>();
     private List<Message> _universe;
-    private static final int MAX_STEPS = 3000;
     private int _step = 0;
 
-    public Simulation(int numberOfPokemonPerType, int numberOfMessages) throws IOException {
-        _random = new RandomGenerator(67);
-        _map = new GameMap(25, 25, _random, 0.05);
-        // TODO: throw si trop grand par rapport à la map
-        this._numberOfPokemonPerType = numberOfPokemonPerType;
+    public Simulation(Config config) throws IOException {
+        _random = new RandomGenerator(config.getLong("simulation.seed"));
+        _map = new GameMap(config.getInt("map.width"), config.getInt("map.height"), _random,
+                config.getDouble("map.obstacle.density"));
+        this._numberOfPokemonPerType = config.getInt("pokemon.per.type");
+        this._maxSteps = config.getInt("simulation.max.steps");
 
         this.generateMasters();
         this.generatePokemon();
-        this.generateMessages(numberOfMessages);
+        this.generateMessages(config.getString("messages.resource"), config.getInt("messages.count"));
     }
 
     private void generateMasters() {
@@ -52,7 +54,7 @@ public class Simulation {
         SafeZone zone = _map.getSafeZone(corner);
         master.reset();
         zone.setMaster(master);
-        master.init(zone, zone.getOuterCornerTile(_map, corner), _map);
+        master.init(zone.getOuterCornerTile(_map, corner), _map);
     }
 
     private void generatePokemon() {
@@ -75,13 +77,12 @@ public class Simulation {
         for (Tile tile : chosen) {
             Pokemon pokemon = factory.get();
             _map.place(pokemon, tile);
-            System.out.println(pokemon.getSymbol() + " -> " + pokemon.getTile());
             _mobiles.add(pokemon);
         }
     }
 
-    private void generateMessages(int count) throws IOException {
-        this._universe = MessageFactory.load(Path.of("./src/main/data/messages.txt"), count, _random);
+    private void generateMessages(String resource, int count) throws IOException {
+        this._universe = MessageFactory.load(resource, count, _random);
         this.distributeMessages(_universe);
     }
 
@@ -96,10 +97,11 @@ public class Simulation {
     }
 
     public void step() {
+        _events.clear();
         _random.shuffle(_mobiles);
         for (Pokemon poke : _mobiles) {
             if (!poke.isExhausted()) {
-                poke.move(_map, _random);
+                poke.move(_map, _random, _events);
             }
         }
         _mobiles.removeIf(Pokemon::isExhausted);
@@ -119,34 +121,31 @@ public class Simulation {
                 MasterGhost.getInstance(), MasterPoison.getInstance());
     }
 
+    /** Agents encore actifs. */
+    public List<Pokemon> getMobiles() {
+        return Collections.unmodifiableList(_mobiles);
+    }
+
+    /** Ce qui s'est passé pendant la dernière étape. */
+    public List<String> getEvents() {
+        return Collections.unmodifiableList(_events);
+    }
+
+    public int getExhaustedCount() {
+        return getMasters().size() * _numberOfPokemonPerType - _mobiles.size();
+    }
+
+    /** Masters ayant le meilleur score : un seul en cas de victoire, plusieurs en cas d'égalité. */
+    public List<Master> getWinners() {
+        int best = getMasters().stream().mapToInt(Master::getScore).max().orElse(0);
+        return getMasters().stream().filter(m -> m.getScore() == best).toList();
+    }
+
     public boolean isFinished() {
-        return _step >= MAX_STEPS || this.anyMasterHasAllMessages();
+        return _step >= _maxSteps || _mobiles.isEmpty() || this.anyMasterHasAllMessages();
     }
 
     private boolean anyMasterHasAllMessages() {
         return getMasters().stream().anyMatch(m -> m.getScore() == _universe.size());
     }
-
-    private void printScores() {
-        System.out.println("Scores - F:" + MasterFire.getInstance().getScore()
-                + " W:" + MasterWater.getInstance().getScore()
-                + " G:" + MasterGhost.getInstance().getScore()
-                + " P:" + MasterPoison.getInstance().getScore());
-    }
-
-
-    public void run(Renderer renderer) {
-        renderer.render(this);
-        while (!isFinished()) {
-            step();
-            renderer.render(this);
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        printScores();
-    }
-
 }

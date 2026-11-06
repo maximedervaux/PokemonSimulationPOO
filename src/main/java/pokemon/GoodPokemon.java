@@ -7,6 +7,7 @@ public abstract class GoodPokemon extends Pokemon {
         super(master, maxEp);
     }
 
+    @Override
     public boolean isGood(){
         return true;
     }

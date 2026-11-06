@@ -8,22 +8,22 @@ import utils.RandomGenerator;
 import java.util.*;
 
 public class GameMap {
-    private int _height = 0;
-    private int _width = 0;
+    private final int _height;
+    private final int _width;
     private final List<List<Tile>> tiles = new ArrayList<>();
     private final Map<Corner, SafeZone> _safeZones = new EnumMap<>(Corner.class);
 
-    public GameMap(int height, int width, RandomGenerator random, double density){
+    public GameMap(int width, int height, RandomGenerator random, double density){
         this._height = height;
         this._width = width;
 
         // First we instantiate all tiles
         for(int x = 0; x < this._width; x++){
-            List<Tile> row = new ArrayList<>();
+            List<Tile> column = new ArrayList<>();
             for(int y = 0; y < this._height; y++){
-                row.add(new Tile(x, y));
+                column.add(new Tile(x, y));
             }
-            tiles.add(row);
+            tiles.add(column);
         }
 
         // Secondly, we generate the 4 SafeZone
@@ -72,10 +72,6 @@ public class GameMap {
         return new int[] { width, height };
     }
 
-    public Collection<SafeZone> getSafeZones(){
-        return this._safeZones.values();
-    }
-
     /**
      * Indique si les coordonnées données correspondent à une case existante de la carte
      * @param x indice horizontal (colonne), compris entre 0 et width - 1
@@ -103,10 +99,6 @@ public class GameMap {
         return around;
     }
 
-    public int getAvailableTileAround(int x, int y){
-        return this.getTilesAround(x,y).size();
-    }
-
     public SafeZone getSafeZone(Corner corner) {
         return this._safeZones.get(corner);
     }
@@ -119,26 +111,36 @@ public class GameMap {
     }
 
     private void generateObstacles(RandomGenerator random, double density){
-        for(List<Tile> row : this.tiles){
-            for(Tile tile : row){
+        for(List<Tile> column : this.tiles){
+            for(Tile tile : column){
                 if(this.getSafeZoneAt(tile.getX(), tile.getY()) != null) continue;
                 if(!tile.isFree()) continue;
                 if(random.nextBoolean(density)){
-                    tile.setOccupant(new Obstacle());
+                    this.place(new Obstacle(), tile);
                 }
             }
         }
     }
 
     public void place(Occupant occupant, Tile tile){
-        // Liberate the old tile
-        if (occupant.getTile() != null) {
-            occupant.getTile().setOccupant(null);
+        if (!tile.isFree()) {
+            throw new IllegalArgumentException("Case déjà occupée : (" + tile.getX() + ", " + tile.getY() + ")");
         }
+
+        // Liberate the old tile
+        this.remove(occupant);
 
         // Update the new one
         tile.setOccupant(occupant);
         occupant.setTile(tile);
+    }
+
+    /** Retire un occupant de la carte et libère sa case. */
+    public void remove(Occupant occupant) {
+        if (occupant.getTile() != null) {
+            occupant.getTile().setOccupant(null);
+            occupant.setTile(null);
+        }
     }
 
     public List<Tile> getFreeTilesIn(SafeZone zone) {
@@ -153,8 +155,8 @@ public class GameMap {
     }
 
     /**
-     * Direction à suivre pour rejoindre la SafeZone du mobile (celle de son Master).
-
+     * Direction à suivre pour rejoindre la SafeZone du mobile : elle vise la case de son Master.
+     * @return null si le mobile est déjà adjacent à son Master
      */
     public Direction directionToSafeZone(Pokemon pokemon) {
         Tile masterTile = pokemon.getMaster().getTile();
@@ -180,7 +182,7 @@ public class GameMap {
     public void convertToObstacle(Pokemon pokemon) {
         Tile current = pokemon.getTile();
         if (current == null) return;
-        current.setOccupant(new Obstacle());
-        pokemon.setTile(null);
+        this.remove(pokemon);
+        this.place(new Obstacle(), current);
     }
 }
