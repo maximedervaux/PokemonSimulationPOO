@@ -1,57 +1,60 @@
 package render;
 
-import com.almasb.fxgl.app.GameApplication;
-import com.almasb.fxgl.app.GameSettings;
-import com.almasb.fxgl.dsl.FXGL;
-import javafx.util.Duration;
 import simulation.Simulation;
 import utils.Config;
 
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
-public class GuiApp extends GameApplication {
-    private Config config;
-    private Simulation sim;
-    private GuiRenderer renderer;
-
-    @Override
-    protected void initSettings(GameSettings settings) {
-        try {
-            config = Config.load();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        settings.setWidth(config.getInt("map.width") * GuiRenderer.CELL + GuiRenderer.PANEL_WIDTH);
-        settings.setHeight(config.getInt("map.height") * GuiRenderer.CELL + GuiRenderer.HUD_HEIGHT);
-        settings.setTitle("Pokemon Simulation");
-        settings.setMainMenuEnabled(false);
-    }
-
-    @Override
-    protected void initGame() {
-        try {
-            sim = new Simulation(config);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        renderer = new GuiRenderer();
-        FXGL.getGameScene().addUINode(renderer.getRoot());
-        renderer.render(sim);
-
-        FXGL.run(() -> {
-            if (!sim.isFinished()) {
-                sim.step();
-                renderer.render(sim);
-                if (sim.isFinished()) {
-                    renderer.renderFinal(sim);
-                }
-            }
-        }, Duration.millis(config.getLong("simulation.step.delay.ms")));
-    }
+public class GuiApp {
+    private static final int MIN_WIDTH = 780;
+    private static final int MIN_HEIGHT = 600;
 
     public static void main(String[] args) {
-        launch(args);
+        SwingUtilities.invokeLater(GuiApp::start);
+    }
+
+    private static void start() {
+        Config config;
+        Simulation sim;
+        try {
+            config = Config.load();
+            sim = new Simulation(config);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        GuiRenderer renderer = new GuiRenderer(sim);
+        renderer.render(sim);
+
+        JFrame frame = new JFrame("Pokemon Simulation");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(renderer);
+        frame.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+        frame.pack();
+
+        // Sur un petit écran, la fenêtre ne dépasse pas la zone disponible
+        Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        frame.setSize(Math.min(frame.getWidth(), screen.width), Math.min(frame.getHeight(), screen.height));
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        Timer timer = new Timer((int) config.getLong("simulation.step.delay.ms"), null);
+        timer.addActionListener(e -> {
+            if (sim.isFinished()) {
+                renderer.renderFinal(sim);
+                timer.stop();
+                return;
+            }
+            sim.step();
+            renderer.render(sim);
+        });
+        timer.start();
     }
 }

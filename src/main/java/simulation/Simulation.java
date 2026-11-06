@@ -131,6 +131,11 @@ public class Simulation {
         return Collections.unmodifiableList(_events);
     }
 
+    /** Nombre de messages à collecter. */
+    public int getMessageCount() {
+        return _universe.size();
+    }
+
     public int getExhaustedCount() {
         return getMasters().size() * _numberOfPokemonPerType - _mobiles.size();
     }
