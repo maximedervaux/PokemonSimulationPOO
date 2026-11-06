@@ -28,6 +28,9 @@ public abstract class Pokemon extends Occupant {
     private static final int[] DETOUR_OFFSETS = {0, 1, -1, 2, -2, 3, -3, 4};
     public abstract boolean isGood();
 
+    /** Directions que cette population peut emprunter. */
+    protected abstract List<Direction> allowedDirections();
+
     protected Pokemon(Master master, int maxEp) {
         this.master = master;
         this.maxEp = maxEp;
@@ -147,9 +150,14 @@ public abstract class Pokemon extends Occupant {
         for (Tile tile : map.getTilesAround(current.getX(), current.getY())) {
             Direction dir = Direction.fromDelta(tile.getX() - current.getX(), tile.getY() - current.getY());
             boolean justBlocked = blockedLastMove && dir == lastDirection;
-            if (canEnter(map, tile) && !justBlocked) {
+            if (allowedDirections().contains(dir) && canEnter(map, tile) && !justBlocked) {
                 options.add(dir);
             }
+        }
+        if (options.isEmpty()) {
+            // La seule issue vient d'être bloquée : elle redevient possible au tour suivant
+            blockedLastMove = false;
+            return null;
         }
         return random.pickRandom(options);
     }
@@ -159,6 +167,8 @@ public abstract class Pokemon extends Occupant {
         Tile current = getTile();
         for (int offset : DETOUR_OFFSETS) {
             Direction dir = wanted.rotated(offset);
+            if (!allowedDirections().contains(dir)) continue;
+
             int nx = current.getX() + dir.getDx();
             int ny = current.getY() + dir.getDy();
             if (!map.isInside(nx, ny)) continue;

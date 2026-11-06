@@ -35,16 +35,27 @@ Le sujet laisse plusieurs règles à définir. Voici celles du code actuel.
 - Chaque SafeZone fait 7 × 7 cases et seule sa population peut y entrer.
 - Chaque Master (`M`) reste immobile dans le coin de la carte, dans sa SafeZone.
 - Chaque population compte 4 agents mobiles.
-- 48 messages, tirés parmi 50 textes distincts, sont répartis entre les agents au démarrage.
+- 48 messages, tirés parmi 200 textes distincts, sont répartis entre les agents au démarrage.
 
 ### Déplacement et énergie
 
+Chaque population a son propre déplacement :
+
+| Population | Déplacement | Directions | Cases par tour | EP maximum |
+|---|---|---|---|---|
+| Fire | Fou | 4 diagonales | 1 à 3 | 100 |
+| Water | Tour | 4 lignes droites | 1 à 3 | 200 |
+| Ghost | Dame | 8 directions | 1 à 3 | 100 |
+| Poison | Roi | 8 directions | 1 | 100 |
+
 - À chaque étape, l'ordre des agents est tiré au hasard et chacun se déplace une fois.
-- Un agent avance de 1 à 3 cases dans une direction.
-- Avec 20 % d'EP ou plus, la direction est tirée au hasard parmi celles qui mènent à
-  une case de la carte, hors zone étrangère. La direction qui vient d'être bloquée est exclue.
+- Avec 20 % d'EP ou plus, la direction est tirée au hasard parmi celles de la population qui
+  mènent à une case de la carte, hors zone étrangère. La direction qui vient d'être bloquée
+  est exclue, sauf au tour suivant si c'était la seule possible : l'agent attend alors un tour.
 - Sous 20 % d'EP, l'agent se dirige vers son Master, une case par tour, et contourne
-  les obstacles et les zones étrangères.
+  les obstacles et les zones étrangères, toujours avec les directions de sa population.
+- Un agent Fire reste toujours sur la même couleur de case, comme un fou aux échecs : deux
+  agents Fire de couleurs différentes ne se rencontrent jamais.
 - L'EP n'est dépensé qu'en dehors de sa propre SafeZone.
 - Hors de sa SafeZone, un agent bloqué par un obstacle, le bord de la carte ou une zone
   étrangère perd l'EP des cases qu'il lui restait à parcourir.
@@ -87,7 +98,7 @@ Le résultat final s'affiche à la fin de la simulation. L'interface graphique g
 
 | Paramètre | Valeur |
 |---|---|
-| EP maximum | 100 |
+| EP maximum | 100, et 200 pour Water |
 | Coût par case | 1 EP |
 | Récupération en SafeZone | 10 EP par étape |
 | Seuil de retour | 20 % des EP |
@@ -95,10 +106,14 @@ Le résultat final s'affiche à la fin de la simulation. L'interface graphique g
 
 Avec ces valeurs, sur 200 graines (1000 à 1199) :
 
-- un groupe collecte tous les messages dans 196 runs ;
-- 15,4 agents sur 16 sont encore vivants en fin de run, en moyenne ;
-- la simulation s'arrête après 208 étapes (médiane) ;
-- les victoires se répartissent en Fire 50, Water 46, Ghost 50, Poison 49, avec 5 égalités.
+- un groupe collecte tous les messages dans 180 runs ;
+- 13,6 agents sur 16 sont encore vivants en fin de run, en moyenne ;
+- la simulation s'arrête après 315 étapes (médiane) ;
+- 20 runs vont jusqu'à 3000 étapes, dont 16 parce qu'au moins un message a été perdu ;
+- les victoires se répartissent en Fire 45, Water 38, Ghost 79, Poison 22, avec 16 égalités.
+
+Water a 200 EP parce qu'une Tour peut avoir 40 cases à parcourir pour rentrer : son seuil de
+retour passe ainsi de 20 à 40 EP.
 
 ## Configuration
 

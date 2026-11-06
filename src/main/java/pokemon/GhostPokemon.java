@@ -1,6 +1,9 @@
 package pokemon;
 
+import enums.Direction;
 import master.MasterGhost;
+
+import java.util.List;
 
 public class GhostPokemon extends BadPokemon{
     private static final int MAX_EP = 100;
@@ -17,4 +20,10 @@ public class GhostPokemon extends BadPokemon{
 
     @Override
     public String getSymbol() { return "G"; }
+
+    /** Se déplace comme une dame : dans les 8 directions. */
+    @Override
+    protected List<Direction> allowedDirections() {
+        return Direction.all();
+    }
 }

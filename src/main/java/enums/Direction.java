@@ -16,6 +16,8 @@ public enum Direction {
     private final int dy;
 
     private static final List<Direction> ALL = List.of(values());
+    private static final List<Direction> ORTHOGONALS = List.of(NORTH, EAST, SOUTH, WEST);
+    private static final List<Direction> DIAGONALS = List.of(NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST);
 
     Direction(int dx, int dy) {
         this.dx = dx;
@@ -37,6 +39,14 @@ public enum Direction {
 
     public static List<Direction> all() {
         return ALL;
+    }
+
+    public static List<Direction> orthogonals() {
+        return ORTHOGONALS;
+    }
+
+    public static List<Direction> diagonals() {
+        return DIAGONALS;
     }
 
     public static Direction fromDelta(int dx, int dy) {
