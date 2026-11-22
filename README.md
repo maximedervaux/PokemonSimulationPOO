@@ -15,8 +15,7 @@ mvn exec:java                     # simulation en console
 mvn exec:java -Dexec.args=gui     # simulation avec interface graphique
 ```
 
-L'interface graphique (FXGL) crée les dossiers `logs/` et `system/` dans le dossier
-courant.
+L'interface graphique utilise Swing, inclus dans le JDK.
 
 ## Règles choisies
 
@@ -93,6 +92,13 @@ de messages gagne ; à score égal, les groupes concernés sont à égalité.
 
 Le résultat final s'affiche à la fin de la simulation. L'interface graphique garde les
 12 derniers événements dans son journal.
+
+Les sprites sont dans `src/main/resources/sprites/`. Pour en changer, il suffit de remplacer
+un PNG en gardant son nom. Les `pokemon_*.png` viennent de [PokéAPI](https://github.com/PokeAPI/sprites)
+(Salamèche, Carapuce, Fantominus, Abo) : Pokémon et ses images appartiennent à Nintendo, Game Freak
+et The Pokémon Company, et ils ne sont utilisés ici que dans le cadre d'un projet de cours non
+commercial. Les autres sprites sont des créations originales. La police VT323 est sous licence
+SIL OFL (`src/main/resources/fonts/VT323-OFL.txt`).
 
 ## Calibrage
 

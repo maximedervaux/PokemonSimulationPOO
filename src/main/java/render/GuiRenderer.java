@@ -1,142 +1,154 @@
 package render;
 
-import environment.GameMap;
-import environment.Occupant;
-import environment.SafeZone;
-import environment.Tile;
-import javafx.scene.Group;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import master.Master;
-import pokemon.Pokemon;
 import simulation.Simulation;
 
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.border.Border;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class GuiRenderer implements Renderer {
-    public static final int CELL = 28;
-    public static final int HUD_HEIGHT = 40;
-    public static final int PANEL_WIDTH = 320;
-    private static final int PANEL_MARGIN = 10;
+/** Fenêtre principale : carte à gauche, fiches des groupes, compteurs et journal à droite. */
+public class GuiRenderer extends JPanel implements Renderer {
+    private static final int SIDE_WIDTH = 440;
+    private static final int SIDE_MIN_WIDTH = 340;
+    private static final int SIDE_MAX_WIDTH = 480;
+    private static final int GAP = 8;
     private static final int JOURNAL_SIZE = 12;
 
-    private final Group root = new Group();
+    private final MapView mapView;
+    private final JComponent side;
+    private final JScrollPane teamsScroll = new JScrollPane(
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    private final JLabel stepLabel = label("", 32, Ui.GOLD);
+    private final JTextArea stats = textArea();
+    private final JTextArea journalArea = textArea();
     private final Deque<String> journal = new ArrayDeque<>();
 
-    /** Noeud à ajouter à la scène FXGL (FXGL.getGameScene().addUINode(...)). */
-    public Group getRoot() {
-        return root;
+    public GuiRenderer(Simulation sim) {
+        super(new BorderLayout());
+        setBackground(Ui.BACKGROUND);
+
+        mapView = new MapView(sim);
+        side = buildSide(sim);
+        add(buildHeader(), BorderLayout.NORTH);
+        add(mapView, BorderLayout.CENTER);
+        add(side, BorderLayout.EAST);
+    }
+
+    /** Le panneau suit la largeur de la fenêtre, entre deux limites ; la carte prend le reste. */
+    @Override
+    public void doLayout() {
+        side.setPreferredSize(new Dimension(Math.clamp(getWidth() * 3L / 8, SIDE_MIN_WIDTH, SIDE_MAX_WIDTH), 0));
+        // Les fiches défilent au-delà de la moitié de la hauteur : le journal garde toujours sa place
+        int teamsHeight = teamsScroll.getViewport().getView().getPreferredSize().height;
+        teamsScroll.setPreferredSize(new Dimension(0, Math.min(teamsHeight, getHeight() / 2)));
+        teamsScroll.invalidate();
+        super.doLayout();
     }
 
     @Override
     public void render(Simulation sim) {
-        root.getChildren().clear();
-        GameMap map = sim.getMap();
-
-        Rectangle background = new Rectangle(map.getWidth() * CELL + PANEL_WIDTH, map.getHeight() * CELL + HUD_HEIGHT);
-        background.setFill(Color.rgb(25, 25, 30));
-        root.getChildren().add(background);
-
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
-                drawTile(map, x, y);
-            }
-        }
-        drawHud(sim);
-        drawPanel(sim);
+        stepLabel.setText("Étape " + sim.getStep());
+        stats.setText("Agents épuisés : " + sim.getExhaustedCount() + "\n" + ReportText.instances());
+        updateJournal(sim);
+        repaint();
     }
 
-    /** Affiche le résultat en haut du panneau, jusqu'à la fermeture de la fenêtre. */
+    /** Affiche le résultat par-dessus la carte, jusqu'à la fermeture de la fenêtre. */
     @Override
     public void renderFinal(Simulation sim) {
-        Text result = new Text(sim.getMap().getWidth() * CELL + PANEL_MARGIN, 16, ReportText.result(sim));
-        result.setFill(Color.GOLD);
-        result.setFont(Font.font("Monospaced", 13));
-        result.setWrappingWidth(PANEL_WIDTH - 2 * PANEL_MARGIN);
-        root.getChildren().add(result);
+        mapView.showResult();
     }
 
-    private void drawTile(GameMap map, int x, int y) {
-        double px = x * CELL;
-        double py = HUD_HEIGHT + y * CELL;
-
-        Rectangle background = new Rectangle(px, py, CELL - 1, CELL - 1);
-        background.setFill(backgroundColor(map, x, y));
-        root.getChildren().add(background);
-
-        Tile tile = map.getTile(x, y);
-        Occupant occupant = tile.getOccupant();
-        if (occupant == null) return;
-
-        Rectangle body = new Rectangle(px + 3, py + 3, CELL - 7, CELL - 7);
-        body.setFill(occupantColor(occupant));
-        root.getChildren().add(body);
-
-        Text label = new Text(px + 9, py + 19, occupant.getSymbol());
-        label.setFill(Color.WHITE);
-        label.setFont(Font.font(14));
-        root.getChildren().add(label);
-
-        // Barre d'EP sous les mobiles (rouge sous 20 %)
-        if (occupant instanceof Pokemon p) {
-            double ratio = p.getEpRatio();
-            Rectangle bar = new Rectangle(px + 3, py + CELL - 6, (CELL - 7) * ratio, 3);
-            bar.setFill(p.isLowEnergy() ? Color.RED : Color.LIMEGREEN);
-            root.getChildren().add(bar);
-        }
-    }
-
-    private Color backgroundColor(GameMap map, int x, int y) {
-        SafeZone zone = map.getSafeZoneAt(x, y);
-        if (zone == null) return Color.rgb(40, 60, 40);          // herbe
-
-        return switch (zone.getMaster().getGroupName()) {
-            case "Fire"  -> Color.rgb(100, 45, 45);
-            case "Water" -> Color.rgb(40, 65, 110);
-            case "Ghost" -> Color.rgb(75, 45, 100);
-            default      -> Color.rgb(65, 85, 45);
-        };
-    }
-
-    private Color occupantColor(Occupant o) {
-        if (o.isObstacle())      return Color.GRAY;
-        if (o instanceof Master) return Color.GOLD;
-        return ((Pokemon) o).isGood() ? Color.DODGERBLUE : Color.MEDIUMPURPLE;
-    }
-
-    private void drawHud(Simulation sim) {
-        Text hud = new Text(10, 26, "Step " + sim.getStep() + "    " + ReportText.scores(sim));
-        hud.setFill(Color.WHITE);
-        hud.setFont(Font.font(16));
-        root.getChildren().add(hud);
-    }
-
-    private void drawPanel(Simulation sim) {
+    private void updateJournal(Simulation sim) {
         for (String event : sim.getEvents()) {
             journal.addFirst("[" + sim.getStep() + "] " + event);
         }
         while (journal.size() > JOURNAL_SIZE) {
             journal.removeLast();
         }
+        journalArea.setText(String.join("\n", journal));
+        journalArea.setCaretPosition(0);
+    }
 
-        StringBuilder sb = new StringBuilder("Instances\n").append(ReportText.instances()).append("\n\n");
-        sb.append("Agents épuisés : ").append(sim.getExhaustedCount()).append("\n\n");
-        for (Master m : sim.getMasters()) {
-            sb.append(m.getGroupName()).append('\n');
-            for (String agent : ReportText.agents(sim, m)) {
-                sb.append("  ").append(agent).append('\n');
-            }
+    private JComponent buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Ui.PANEL);
+        header.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 2, 0, Ui.BORDER),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)));
+        header.add(label("Pokemon Simulation", 32, Ui.TEXT), BorderLayout.WEST);
+        header.add(stepLabel, BorderLayout.EAST);
+        return header;
+    }
+
+    private JComponent buildSide(Simulation sim) {
+        JPanel teams = new JPanel(new GridLayout(2, 2, GAP, GAP));
+        teams.setOpaque(false);
+        for (Master master : sim.getMasters()) {
+            teams.add(new TeamCard(sim, master));
         }
-        sb.append("\nJournal\n");
-        journal.forEach(line -> sb.append(line).append('\n'));
 
-        Text panel = new Text(sim.getMap().getWidth() * CELL + PANEL_MARGIN, HUD_HEIGHT + 12, sb.toString());
-        panel.setFill(Color.WHITE);
-        panel.setFont(Font.font("Monospaced", 12));
-        panel.setWrappingWidth(PANEL_WIDTH - 2 * PANEL_MARGIN);
-        root.getChildren().add(panel);
+        JPanel top = new JPanel(new BorderLayout(0, GAP));
+        top.setOpaque(false);
+        teamsScroll.setViewportView(teams);
+        teamsScroll.setBorder(null);
+        teamsScroll.setOpaque(false);
+        teamsScroll.getViewport().setOpaque(false);
+        teamsScroll.getVerticalScrollBar().setUnitIncrement(TeamCard.ROW_HEIGHT);
+        top.add(teamsScroll, BorderLayout.CENTER);
+        top.add(section("Compteurs", stats), BorderLayout.SOUTH);
+
+        JScrollPane scroll = new JScrollPane(journalArea,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(null);
+        scroll.setPreferredSize(new Dimension(0, 0));
+
+        JPanel side = new JPanel(new BorderLayout(0, GAP));
+        side.setBackground(Ui.BACKGROUND);
+        side.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
+        side.setPreferredSize(new Dimension(SIDE_WIDTH, 0));
+        side.add(top, BorderLayout.NORTH);
+        side.add(section("Journal", scroll), BorderLayout.CENTER);
+        return side;
+    }
+
+    private JComponent section(String title, JComponent content) {
+        Border padding = BorderFactory.createEmptyBorder(6, 10, 8, 10);
+        JPanel section = new JPanel(new BorderLayout(0, 4));
+        section.setBackground(Ui.PANEL);
+        section.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Ui.BORDER, 2), padding));
+        section.add(label(title, 22, Ui.GOLD), BorderLayout.NORTH);
+        section.add(content, BorderLayout.CENTER);
+        return section;
+    }
+
+    private static JLabel label(String text, float size, Color color) {
+        JLabel label = new JLabel(text);
+        label.setFont(Ui.font(size));
+        label.setForeground(color);
+        return label;
+    }
+
+    private static JTextArea textArea() {
+        JTextArea area = new JTextArea();
+        area.setFont(Ui.font(16));
+        area.setForeground(Ui.TEXT);
+        area.setBackground(Ui.PANEL);
+        area.setEditable(false);
+        area.setFocusable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        return area;
     }
 }
