@@ -19,36 +19,43 @@ public enum Direction {
     private static final List<Direction> ORTHOGONALS = List.of(NORTH, EAST, SOUTH, WEST);
     private static final List<Direction> DIAGONALS = List.of(NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST);
 
+    /** Crée une direction à partir de son déplacement horizontal et vertical. */
     Direction(int dx, int dy) {
         this.dx = dx;
         this.dy = dy;
     }
 
+    /** Retourne le déplacement horizontal associé à la direction. */
     public int getDx() {
         return dx;
     }
 
+    /** Retourne le déplacement vertical associé à la direction. */
     public int getDy() {
         return dy;
     }
 
-    /** Direction obtenue en tournant de eighths huitièmes de tour dans le sens horaire. */
+    /** Retourne la direction obtenue après une rotation horaire par huitièmes de tour. */
     public Direction rotated(int eighths) {
         return ALL.get(Math.floorMod(ordinal() + eighths, ALL.size()));
     }
 
+    /** Retourne les huit directions de déplacement. */
     public static List<Direction> all() {
         return ALL;
     }
 
+    /** Retourne les quatre directions horizontales et verticales. */
     public static List<Direction> orthogonals() {
         return ORTHOGONALS;
     }
 
+    /** Retourne les quatre directions diagonales. */
     public static List<Direction> diagonals() {
         return DIAGONALS;
     }
 
+    /** Convertit un vecteur de déplacement en direction normalisée. */
     public static Direction fromDelta(int dx, int dy) {
         int sx = Integer.signum(dx);
         int sy = Integer.signum(dy);

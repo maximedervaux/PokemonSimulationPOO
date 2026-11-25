@@ -13,6 +13,7 @@ public class GameMap {
     private final List<List<Tile>> tiles = new ArrayList<>();
     private final Map<Corner, SafeZone> _safeZones = new EnumMap<>(Corner.class);
 
+    /** Construit la grille, ses SafeZones et les obstacles initiaux. */
     public GameMap(int width, int height, RandomGenerator random, double density){
         this._height = height;
         this._width = width;
@@ -33,14 +34,17 @@ public class GameMap {
         this.generateObstacles(random, density);
     }
 
+    /** Retourne le nombre de lignes de la carte. */
     public int getHeight() {
         return _height;
     }
 
+    /** Retourne le nombre de colonnes de la carte. */
     public int getWidth() {
         return _width;
     }
 
+    /** Calcule et place les quatre SafeZones aux coins de la carte. */
     private void createSafeZone(){
         int[] dim = getSafeZoneDimensions();
         int zoneWidth = dim[0];
@@ -56,10 +60,12 @@ public class GameMap {
         _safeZones.put(Corner.BOTTOM_RIGHT, new SafeZone(_width - zoneWidth,  _height - zoneHeight,  zoneWidth, zoneHeight));
     }
 
+    /** Calcule la surface maximale attribuée à une SafeZone. */
     private int getMaximalSafeZoneSize() {
         return (this._width * this._height - 1) / 12;
     }
 
+    /** Déduit des dimensions de la carte la taille des SafeZones. */
     private int[] getSafeZoneDimensions() {
         int maxArea = getMaximalSafeZoneSize();
 
@@ -82,10 +88,12 @@ public class GameMap {
         return x >= 0 && x < this._width && y >= 0 && y < this._height;
     }
 
+    /** Retourne la case aux coordonnées indiquées. */
     public Tile getTile(int x, int y){
         return this.tiles.get(x).get(y);
     }
 
+    /** Retourne les cases voisines situées dans les limites de la carte. */
     public List<Tile> getTilesAround(int x, int y) {
         if (!isInside(x, y)) {
             throw new IllegalArgumentException("Hors carte : (" + x + ", " + y + ")");
@@ -99,10 +107,12 @@ public class GameMap {
         return around;
     }
 
+    /** Retourne la SafeZone du coin demandé. */
     public SafeZone getSafeZone(Corner corner) {
         return this._safeZones.get(corner);
     }
 
+    /** Retourne la SafeZone contenant ces coordonnées, ou {@code null}. */
     public SafeZone getSafeZoneAt(int x, int y) {
         for (SafeZone z : this._safeZones.values()) {
             if (z.contains(x, y)) return z;
@@ -110,6 +120,7 @@ public class GameMap {
         return null;
     }
 
+    /** Place aléatoirement des obstacles hors des SafeZones. */
     private void generateObstacles(RandomGenerator random, double density){
         for(List<Tile> column : this.tiles){
             for(Tile tile : column){
@@ -122,6 +133,7 @@ public class GameMap {
         }
     }
 
+    /** Place un occupant sur une case libre en libérant sa position précédente. */
     public void place(Occupant occupant, Tile tile){
         if (!tile.isFree()) {
             throw new IllegalArgumentException("Case déjà occupée : (" + tile.getX() + ", " + tile.getY() + ")");
@@ -143,6 +155,7 @@ public class GameMap {
         }
     }
 
+    /** Liste les cases libres d'une SafeZone. */
     public List<Tile> getFreeTilesIn(SafeZone zone) {
         List<Tile> free = new ArrayList<>();
         for (int y = zone.getY0(); y < zone.getY0() + zone.getHeight(); y++) {

@@ -7,6 +7,7 @@ import utils.Config;
 import java.io.IOException;
 
 public class Main {
+    /** Choisit le rendu demandé et démarre la simulation. */
     public static void main(String[] args) throws IOException {
         if (args.length > 0 && args[0].equals("gui")) {
             GuiApp.main(args);
@@ -16,6 +17,7 @@ public class Main {
         }
     }
 
+    /** Exécute la simulation avec le rendu et le délai indiqués. */
     private static void run(Simulation sim, Renderer renderer, long delayMs) {
         renderer.render(sim);
         try {

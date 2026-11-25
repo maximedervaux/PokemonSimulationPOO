@@ -28,6 +28,7 @@ class TeamCard extends JComponent {
     private final Master master;
     private final Color color;
 
+    /** Prépare la fiche d'équipe affichant le score et les agents actifs. */
     TeamCard(Simulation sim, Master master) {
         this.sim = sim;
         this.master = master;
@@ -35,6 +36,7 @@ class TeamCard extends JComponent {
         setPreferredSize(new Dimension(0, HEADER_HEIGHT + agents().size() * ROW_HEIGHT + PADDING));
     }
 
+    /** Dessine le cadre, le score, les barres d'énergie et les agents de l'équipe. */
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics;
@@ -55,6 +57,7 @@ class TeamCard extends JComponent {
         }
     }
 
+    /** Dessine le nom du groupe, son Master et sa progression de score. */
     private void drawHeader(Graphics2D g) {
         g.drawImage(Ui.sprite("master_" + Ui.key(master.getGroupName())), PADDING, PADDING, SPRITE, SPRITE, null);
 
@@ -73,6 +76,7 @@ class TeamCard extends JComponent {
                 (double) master.getScore() / total, color);
     }
 
+    /** Dessine l'identifiant, l'énergie et les messages d'un agent. */
     private void drawAgent(Graphics2D g, Pokemon agent, int y) {
         g.setFont(Ui.font(16));
         FontMetrics metrics = g.getFontMetrics();
@@ -89,6 +93,7 @@ class TeamCard extends JComponent {
         g.drawString(stats, getWidth() - PADDING - metrics.stringWidth(stats), baseline);
     }
 
+    /** Retourne les agents actifs associés à ce Master, triés par identifiant. */
     private List<Pokemon> agents() {
         return sim.getMobiles().stream()
                 .filter(p -> p.getMaster() == master)

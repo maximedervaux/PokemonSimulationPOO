@@ -15,14 +15,17 @@ import java.util.stream.Collectors;
 
 /** Textes communs aux affichages console et graphique. */
 final class ReportText {
+    /** Empêche l'instanciation de cette classe utilitaire. */
     private ReportText() { }
 
+    /** Formate les scores courants des équipes. */
     static String scores(Simulation sim) {
         return sim.getMasters().stream()
                 .map(m -> m.getGroupName() + ": " + m.getScore())
                 .collect(Collectors.joining("   "));
     }
 
+    /** Formate le vainqueur ou les équipes à égalité avec leur score. */
     static String result(Simulation sim) {
         List<Master> winners = sim.getWinners();
         int score = winners.get(0).getScore();
@@ -31,7 +34,7 @@ final class ReportText {
         return label + " : " + names + " avec " + score + " message(s)";
     }
 
-    /** Valeurs des compteurs statiques d'instances. */
+    /** Formate les compteurs d'instances des classes suivies. */
     static String instances() {
         return "Pokemon=" + Pokemon.getInstanceCount()
                 + " (Fire=" + FirePokemon.getInstanceCount()
@@ -42,7 +45,7 @@ final class ReportText {
                 + "  Message=" + Message.getInstanceCount();
     }
 
-    /** État de chaque agent actif du groupe, par exemple "F3 96EP 2msg". */
+    /** Formate l'énergie et les messages de chaque agent actif du groupe. */
     static List<String> agents(Simulation sim, Master master) {
         return sim.getMobiles().stream()
                 .filter(p -> p.getMaster() == master)

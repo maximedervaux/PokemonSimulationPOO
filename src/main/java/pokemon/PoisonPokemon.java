@@ -10,15 +10,18 @@ public class PoisonPokemon extends BadPokemon {
     private static final int MAX_EP = 100;
     private static int instanceCount = 0;
 
+    /** Crée un Pokémon Poison rattaché au Master Poison. */
     public PoisonPokemon() {
         super(MasterPoison.getInstance(), MAX_EP);
         PoisonPokemon.instanceCount++;
     }
 
+    /** Retourne le nombre de Pokémon Poison créés. */
     public static int getInstanceCount() {
         return instanceCount;
     }
 
+    /** Retourne le symbole console de la population Poison. */
     @Override
     public String getSymbol() { return "P"; }
 
@@ -28,6 +31,7 @@ public class PoisonPokemon extends BadPokemon {
         return Direction.all();
     }
 
+    /** Limite le déplacement de ce Pokémon à une seule case par tour. */
     @Override
     protected int chooseDistance(RandomGenerator random) {
         return 1;

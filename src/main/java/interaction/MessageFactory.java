@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MessageFactory {
+    /** Empêche l'instanciation de cette fabrique statique. */
     private MessageFactory() { }
 
+    /** Charge des textes distincts et en crée un sous-ensemble aléatoire de messages. */
     public static List<Message> load(String resource, int count, utils.RandomGenerator random) throws IOException {
         InputStream in = MessageFactory.class.getClassLoader().getResourceAsStream(resource);
         if (in == null) {

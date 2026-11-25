@@ -11,15 +11,18 @@ public class WaterPokemon extends GoodPokemon{
     private static final int MAX_EP = 200;
     private static int instanceCount = 0;
 
+    /** Crée un Pokémon Water rattaché au Master Water. */
     public WaterPokemon() {
         super(MasterWater.getInstance(), MAX_EP);
         WaterPokemon.instanceCount++;
     }
 
+    /** Retourne le nombre de Pokémon Water créés. */
     public static int getInstanceCount() {
         return instanceCount;
     }
 
+    /** Retourne le symbole console de la population Water. */
     @Override
     public String getSymbol() { return "W"; }
 

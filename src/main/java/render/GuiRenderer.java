@@ -34,6 +34,7 @@ public class GuiRenderer extends JPanel implements Renderer {
     private final JTextArea journalArea = textArea();
     private final Deque<String> journal = new ArrayDeque<>();
 
+    /** Assemble la carte et les panneaux d'information autour de la simulation. */
     public GuiRenderer(Simulation sim) {
         super(new BorderLayout());
         setBackground(Ui.BACKGROUND);
@@ -56,6 +57,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         super.doLayout();
     }
 
+    /** Actualise l'étape, les compteurs, le journal et la fenêtre. */
     @Override
     public void render(Simulation sim) {
         stepLabel.setText("Étape " + sim.getStep());
@@ -70,6 +72,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         mapView.showResult();
     }
 
+    /** Ajoute les événements récents au journal en conservant sa taille maximale. */
     private void updateJournal(Simulation sim) {
         for (String event : sim.getEvents()) {
             journal.addFirst("[" + sim.getStep() + "] " + event);
@@ -81,6 +84,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         journalArea.setCaretPosition(0);
     }
 
+    /** Construit l'en-tête contenant le titre et l'étape courante. */
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Ui.PANEL);
@@ -92,6 +96,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         return header;
     }
 
+    /** Construit les fiches des équipes, les compteurs et le journal. */
     private JComponent buildSide(Simulation sim) {
         JPanel teams = new JPanel(new GridLayout(2, 2, GAP, GAP));
         teams.setOpaque(false);
@@ -123,6 +128,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         return side;
     }
 
+    /** Encadre un composant sous un titre de section. */
     private JComponent section(String title, JComponent content) {
         Border padding = BorderFactory.createEmptyBorder(6, 10, 8, 10);
         JPanel section = new JPanel(new BorderLayout(0, 4));
@@ -133,6 +139,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         return section;
     }
 
+    /** Crée une étiquette utilisant la police et la couleur de l'interface. */
     private static JLabel label(String text, float size, Color color) {
         JLabel label = new JLabel(text);
         label.setFont(Ui.font(size));
@@ -140,6 +147,7 @@ public class GuiRenderer extends JPanel implements Renderer {
         return label;
     }
 
+    /** Crée une zone de texte en lecture seule aux couleurs de l'interface. */
     private static JTextArea textArea() {
         JTextArea area = new JTextArea();
         area.setFont(Ui.font(16));

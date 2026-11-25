@@ -27,8 +27,10 @@ final class Ui {
     private static final Font FONT = loadFont();
     private static final Map<String, BufferedImage> SPRITES = new HashMap<>();
 
+    /** Empêche l'instanciation de cette classe utilitaire graphique. */
     private Ui() { }
 
+    /** Retourne la police de l'interface à la taille demandée. */
     static Font font(float size) {
         return FONT.deriveFont(size);
     }
@@ -43,6 +45,7 @@ final class Ui {
         return groupName.toLowerCase(Locale.ROOT);
     }
 
+    /** Retourne la couleur associée au nom d'une équipe. */
     static Color teamColor(String groupName) {
         return switch (groupName) {
             case "Fire"  -> new Color(0xEF7D57);
@@ -60,6 +63,7 @@ final class Ui {
         g.fillRect(x, y, (int) Math.round(width * ratio), height);
     }
 
+    /** Charge la police embarquée utilisée par l'interface. */
     private static Font loadFont() {
         try (InputStream in = Ui.class.getResourceAsStream("/fonts/VT323-Regular.ttf")) {
             return Font.createFont(Font.TRUETYPE_FONT, in);
@@ -70,6 +74,7 @@ final class Ui {
         }
     }
 
+    /** Charge un sprite depuis les ressources ou signale son absence. */
     private static BufferedImage loadSprite(String name) {
         try (InputStream in = Ui.class.getResourceAsStream("/sprites/" + name + ".png")) {
             if (in == null) {

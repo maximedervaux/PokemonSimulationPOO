@@ -31,6 +31,7 @@ public class Simulation {
     private List<Message> _universe;
     private int _step = 0;
 
+    /** Initialise la carte, les équipes, les agents et leur univers de messages. */
     public Simulation(Config config) throws IOException {
         _random = new RandomGenerator(config.getLong("simulation.seed"));
         _map = new GameMap(config.getInt("map.width"), config.getInt("map.height"), _random,
@@ -43,6 +44,7 @@ public class Simulation {
         this.generateMessages(config.getString("messages.resource"), config.getInt("messages.count"));
     }
 
+    /** Crée et place les quatre Masters dans leurs SafeZones respectives. */
     private void generateMasters() {
         assign(Corner.TOP_LEFT,     MasterFire.getInstance());
         assign(Corner.TOP_RIGHT,    MasterWater.getInstance());
@@ -50,6 +52,7 @@ public class Simulation {
         assign(Corner.BOTTOM_RIGHT, MasterPoison.getInstance());
     }
 
+    /** Réinitialise un Master et l'installe dans le coin indiqué. */
     private void assign(Corner corner, Master master) {
         SafeZone zone = _map.getSafeZone(corner);
         master.reset();
@@ -57,6 +60,7 @@ public class Simulation {
         master.init(zone.getOuterCornerTile(_map, corner), _map);
     }
 
+    /** Crée les populations mobiles dans les SafeZones correspondantes. */
     private void generatePokemon() {
         spawn(Corner.TOP_LEFT,     FirePokemon::new);
         spawn(Corner.TOP_RIGHT,    WaterPokemon::new);
@@ -64,6 +68,7 @@ public class Simulation {
         spawn(Corner.BOTTOM_RIGHT, PoisonPokemon::new);
     }
 
+    /** Place le nombre configuré de Pokémon sur des cases libres de leur zone. */
     private void spawn(Corner corner, Supplier<Pokemon> factory) {
         SafeZone zone = _map.getSafeZone(corner);
         List<Tile> free = _map.getFreeTilesIn(zone);
@@ -81,11 +86,13 @@ public class Simulation {
         }
     }
 
+    /** Charge l'univers de messages puis le répartit entre les Pokémon. */
     private void generateMessages(String resource, int count) throws IOException {
         this._universe = MessageFactory.load(resource, count, _random);
         this.distributeMessages(_universe);
     }
 
+    /** Distribue équitablement les messages après en avoir mélangé l'ordre. */
     private void distributeMessages(List<Message> universe) {
         List<Message> shuffled = new ArrayList<>(universe);
         _random.shuffle(shuffled);
@@ -96,6 +103,7 @@ public class Simulation {
         }
     }
 
+    /** Fait jouer une fois chaque agent actif dans un ordre aléatoire. */
     public void step() {
         _events.clear();
         _random.shuffle(_mobiles);
@@ -108,14 +116,17 @@ public class Simulation {
         _step++;
     }
 
+    /** Retourne la carte de cette simulation. */
     public GameMap getMap() {
         return _map;
     }
 
+    /** Retourne le nombre d'étapes déjà jouées. */
     public int getStep() {
         return _step;
     }
 
+    /** Retourne les quatre Masters dans l'ordre des équipes. */
     public List<Master> getMasters() {
         return List.of(MasterFire.getInstance(), MasterWater.getInstance(),
                 MasterGhost.getInstance(), MasterPoison.getInstance());
@@ -136,6 +147,7 @@ public class Simulation {
         return _universe.size();
     }
 
+    /** Retourne le nombre de Pokémon retirés après épuisement. */
     public int getExhaustedCount() {
         return getMasters().size() * _numberOfPokemonPerType - _mobiles.size();
     }
@@ -146,10 +158,12 @@ public class Simulation {
         return getMasters().stream().filter(m -> m.getScore() == best).toList();
     }
 
+    /** Indique si une condition de fin de partie est atteinte. */
     public boolean isFinished() {
         return _step >= _maxSteps || _mobiles.isEmpty() || this.anyMasterHasAllMessages();
     }
 
+    /** Vérifie si un Master possède tous les messages de l'univers. */
     private boolean anyMasterHasAllMessages() {
         return getMasters().stream().anyMatch(m -> m.getScore() == _universe.size());
     }

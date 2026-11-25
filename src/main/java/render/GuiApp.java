@@ -16,10 +16,12 @@ public class GuiApp {
     private static final int MIN_WIDTH = 780;
     private static final int MIN_HEIGHT = 600;
 
+    /** Lance la création de l'interface sur le thread graphique Swing. */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GuiApp::start);
     }
 
+    /** Charge la configuration, ouvre la fenêtre et planifie les étapes. */
     private static void start() {
         Config config;
         Simulation sim;

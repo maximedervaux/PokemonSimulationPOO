@@ -15,6 +15,7 @@ public abstract class Master extends Occupant {
     private final Set<Message> messages = new HashSet<>();
     private GameMap map;
 
+    /** Initialise un Master et incrémente le compteur d'instances. */
     protected Master() {
         super();
         instanceCount++;
@@ -51,11 +52,15 @@ public abstract class Master extends Occupant {
     /** Score du groupe : nombre de messages distincts détenus par le Master. */
     public int getScore() { return messages.size(); }
 
+    /** Retourne les messages du Master en lecture seule. */
     public Set<Message> getMessages() { return Collections.unmodifiableSet(messages); }
 
+    /** Retourne le nombre de Masters instanciés. */
     public static int getInstanceCount() { return instanceCount; }
 
+    /** Retourne le symbole commun aux Masters dans la carte. */
     @Override public String getSymbol() { return "M"; }
 
+    /** Indique qu'un Master ne bloque pas le déplacement comme un obstacle. */
     @Override public boolean isObstacle() { return false; }
 }

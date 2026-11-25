@@ -7,6 +7,7 @@ import simulation.Simulation;
 
 public class ConsoleRenderer implements Renderer {
 
+    /** Affiche la carte, les scores, les agents et les événements de l'étape. */
     @Override
     public void render(Simulation sim) {
         StringBuilder sb = new StringBuilder();
@@ -22,12 +23,13 @@ public class ConsoleRenderer implements Renderer {
         System.out.print(sb);
     }
 
+    /** Affiche le classement final de la simulation. */
     @Override
     public void renderFinal(Simulation sim) {
         System.out.println("Résultat - " + ReportText.result(sim));
     }
 
-    /** Occupant -> its symbol, SafeZone -> 'S', empty tile -> '.' */
+    /** Convertit la carte en grille de symboles pour la console. */
     private String drawMap(GameMap map) {
         StringBuilder sb = new StringBuilder();
         for (int y = 0; y < map.getHeight(); y++) {
@@ -49,6 +51,7 @@ public class ConsoleRenderer implements Renderer {
         return sb.toString();
     }
 
+    /** Formate la liste des agents encore actifs, équipe par équipe. */
     private String drawAgents(Simulation sim) {
         StringBuilder sb = new StringBuilder();
         for (Master m : sim.getMasters()) {
@@ -59,6 +62,7 @@ public class ConsoleRenderer implements Renderer {
         return sb.toString();
     }
 
+    /** Formate les événements survenus pendant la dernière étape. */
     private String drawEvents(Simulation sim) {
         StringBuilder sb = new StringBuilder();
         for (String event : sim.getEvents()) {

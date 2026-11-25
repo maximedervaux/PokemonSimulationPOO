@@ -35,6 +35,7 @@ class MapView extends JComponent {
     private String result;
     private List<Master> winners = List.of();
 
+    /** Prépare le composant cartographique et met en cache le terrain. */
     MapView(Simulation sim) {
         this.sim = sim;
         GameMap map = sim.getMap();
@@ -44,12 +45,14 @@ class MapView extends JComponent {
         terrain = drawTerrain(map);
     }
 
+    /** Mémorise les vainqueurs et demande le rafraîchissement de la carte. */
     void showResult() {
         result = ReportText.result(sim);
         winners = sim.getWinners();
         repaint();
     }
 
+    /** Dessine le terrain, ses occupants, les SafeZones et le résultat final éventuel. */
     @Override
     protected void paintComponent(Graphics graphics) {
         GameMap map = sim.getMap();
@@ -90,10 +93,12 @@ class MapView extends JComponent {
         }
     }
 
+    /** Convertit une coordonnée en cases en coordonnée en pixels. */
     private static int scaled(int tiles, double cell) {
         return (int) Math.round(tiles * cell);
     }
 
+    /** Calcule une taille de sprite lisible selon la taille des cases. */
     private static int pokemonSize(double cell) {
         return Math.max(MIN_POKEMON_SPRITE, (int) (2 * cell));
     }
@@ -118,6 +123,7 @@ class MapView extends JComponent {
         return image;
     }
 
+    /** Dessine le contour des SafeZones avec la couleur de leur équipe. */
     private void drawZoneBorders(Graphics2D g, GameMap map, double cell) {
         g.setStroke(new BasicStroke(2));
         for (Corner corner : Corner.values()) {
@@ -139,6 +145,7 @@ class MapView extends JComponent {
                 size, size);
     }
 
+    /** Dessine un sprite centré sur la case de son occupant. */
     private void drawSprite(Graphics2D g, String sprite, Occupant occupant, int size, double cell) {
         Rectangle bounds = spriteBounds(occupant, size, cell);
         g.drawImage(Ui.sprite(sprite), bounds.x, bounds.y, size, size, null);
@@ -153,6 +160,7 @@ class MapView extends JComponent {
                 p.getEpRatio(), p.isLowEnergy() ? Ui.EP_LOW : Ui.EP_OK);
     }
 
+    /** Dessine le panneau final avec le score et le sprite des vainqueurs. */
     private void drawResult(Graphics2D g) {
         g.setColor(new Color(0, 0, 0, 140));
         g.fillRect(0, 0, getWidth(), getHeight());
